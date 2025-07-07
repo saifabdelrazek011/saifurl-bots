@@ -1,7 +1,7 @@
 const SaifurlsBotUsers = require("../../db/mongodb.js");
 const { errorMessage } = require("../../handlers/telegram/messages.js");
 const { Keyboard, Key } = require("telegram-keyboard");
-const { checkApiKeyExists } = require("../../utils/api/api.utils.js");
+const { checkApiKeyExists } = require("../../utils/api/apikey.js");
 const { deleteMessage } = require("../../handlers/telegram/commands.js");
 
 const {
@@ -11,7 +11,6 @@ const {
 } = require("../../utils/crypto.utils");
 
 const showApiKeyMenu = async (bot, msg) => {
-  // ✅ This should be for commands, not callbacks
   try {
     const existingUser = await SaifurlsBotUsers.findOne({
       userId: msg.from.id.toString(),
@@ -19,7 +18,6 @@ const showApiKeyMenu = async (bot, msg) => {
 
     if (!existingUser) {
       await bot.sendMessage(
-        // ✅ Add await
         msg.chat.id,
         "You need to run /start command first to register.",
         {
@@ -42,13 +40,16 @@ const showApiKeyMenu = async (bot, msg) => {
             [Key.callback("🗑️ Delete API Key", "delete_api_key")],
           ]
         : []),
+      [Key.callback("🔙 Back to Main Menu", "back_to_main")],
     ]).inline();
 
-    await bot.sendMessage(msg.chat.id, "Please choose an action:", keyboard); // ✅ Add await
+    await bot.sendMessage(msg.chat.id, "Please choose an action:", {
+      ...keyboard,
+      disable_web_page_preview: true,
+    });
   } catch (error) {
     console.error("Error in showApiKeyMenu:", error);
     await bot.sendMessage(msg.chat.id, errorMessage, {
-      // ✅ Add await
       parse_mode: "Markdown",
     });
   }
@@ -56,46 +57,58 @@ const showApiKeyMenu = async (bot, msg) => {
 
 const setApiKey = async (bot, query) => {
   try {
-    const chatId = query.message.chat.id; // ✅ Fix: Use query.message.chat.id
-    const userId = query.from.id.toString(); // ✅ Fix: Use query.from.id
+    const chatId = query.message.chat.id;
+    const userId = query.from.id.toString();
 
     const existingUser = await SaifurlsBotUsers.findOne({ userId });
 
     if (!existingUser) {
       await bot.sendMessage(
-        // ✅ Add await
         chatId,
-        "You should run /start command first to register."
+        "You should run /start command first to register.",
+        {
+          disable_web_page_preview: true,
+        }
       );
       return;
     }
 
-    // ✅ Check if API key already exists BEFORE asking for input
     if (existingUser.encryptedApiKey) {
       await bot.sendMessage(
-        // ✅ Add await
         chatId,
-        "API key already exists. Use Update API Key to change it."
+        "API key already exists. Use Update API Key to change it.",
+        {
+          disable_web_page_preview: true,
+        }
       );
       return;
     }
 
-    await bot.sendMessage(chatId, "Please send your API key:"); // ✅ Add await
+    await bot.sendMessage(chatId, "Please send your API key:", {
+      disable_web_page_preview: true,
+    });
 
     bot.once("message", async (msg) => {
       try {
-        // ✅ Delete the user's API key message for security
         await deleteMessage(bot, msg);
 
         const apiKey = msg.text;
 
         if (!apiKey || apiKey.trim() === "") {
-          return await bot.sendMessage(msg.chat.id, "API key cannot be empty."); // ✅ Add await
+          return await bot.sendMessage(
+            msg.chat.id,
+            "API key cannot be empty.",
+            {
+              disable_web_page_preview: true,
+            }
+          );
         }
 
-        const apiKeyExists = await checkApiKeyExists(apiKey); // ✅ Add await
+        const apiKeyExists = await checkApiKeyExists(apiKey);
         if (!apiKeyExists) {
-          return await bot.sendMessage(msg.chat.id, "Invalid API key."); // ✅ Add await
+          return await bot.sendMessage(msg.chat.id, "Invalid API key.", {
+            disable_web_page_preview: true,
+          });
         }
 
         const encryptedData = encrypt(apiKey);
@@ -105,45 +118,63 @@ const setApiKey = async (bot, query) => {
         existingUser.encryptedApiKey = encryptedData;
         existingUser.lookupHash = lookupHash;
 
-        await existingUser.save(); // ✅ Add await
-        await bot.sendMessage(msg.chat.id, "✅ API key set successfully!"); // ✅ Add await
+        await existingUser.save();
+        await bot.sendMessage(msg.chat.id, "✅ API key set successfully!", {
+          disable_web_page_preview: true,
+        });
+
+        setTimeout(async () => {
+          const fakeMsg = {
+            from: { id: existingUser.userId },
+            chat: { id: msg.chat.id },
+          };
+          await showApiKeyMenu(bot, fakeMsg);
+        }, 2000);
       } catch (error) {
         console.error("Error setting API key:", error);
-        await bot.sendMessage(msg.chat.id, errorMessage); // ✅ Add await
+        await bot.sendMessage(msg.chat.id, errorMessage, {
+          disable_web_page_preview: true,
+        });
       }
     });
   } catch (error) {
     console.error("Error in setApiKey:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage); // ✅ Add await and fix chatId
+    await bot.sendMessage(query.message.chat.id, errorMessage);
   }
 };
 
 const updateApiKey = async (bot, query) => {
   try {
-    const chatId = query.message.chat.id; // ✅ Fix: Use query.message.chat.id
-    const userId = query.from.id.toString(); // ✅ Fix: Use query.from.id
+    const chatId = query.message.chat.id;
+    const userId = query.from.id.toString();
 
     const existingUser = await SaifurlsBotUsers.findOne({ userId });
 
     if (!existingUser) {
       await bot.sendMessage(
-        // ✅ Add await
         chatId,
-        "You need to run /start command first to register."
+        "You need to run /start command first to register.",
+        {
+          disable_web_page_preview: true,
+        }
       );
       return;
     }
 
     if (!existingUser.encryptedApiKey) {
       await bot.sendMessage(
-        // ✅ Add await
         chatId,
-        "No existing API key found. Please set it first using /apikey command."
+        "No existing API key found. Please set it first using /apikey command.",
+        {
+          disable_web_page_preview: true,
+        }
       );
       return;
     }
 
-    await bot.sendMessage(chatId, "Please send your new API key:"); // ✅ Add await
+    await bot.sendMessage(chatId, "Please send your new API key:", {
+      disable_web_page_preview: true,
+    });
 
     bot.once("message", async (msg) => {
       try {
@@ -152,12 +183,16 @@ const updateApiKey = async (bot, query) => {
         const apiKey = msg.text;
 
         if (!apiKey || apiKey.trim() === "") {
-          return await bot.sendMessage(msg.chat.id, "API key cannot be empty."); // ✅ Add await
+          return await bot.sendMessage(msg.chat.id, "API key cannot be empty.", {
+            disable_web_page_preview: true,
+          });
         }
 
         const apiKeyExists = await checkApiKeyExists(apiKey); // ✅ Add await
         if (!apiKeyExists) {
-          return await bot.sendMessage(msg.chat.id, "Invalid API key."); // ✅ Add await
+          return await bot.sendMessage(msg.chat.id, "Invalid API key.", {
+            disable_web_page_preview: true,
+          });
         }
 
         const encryptedData = encrypt(apiKey);
@@ -169,15 +204,29 @@ const updateApiKey = async (bot, query) => {
           { encryptedApiKey: encryptedData, lookupHash }
         );
 
-        await bot.sendMessage(msg.chat.id, "✅ API key updated successfully!"); // ✅ Add await
+        await bot.sendMessage(msg.chat.id, "✅ API key updated successfully!", {
+          disable_web_page_preview: true,
+        });
+
+        setTimeout(async () => {
+          const fakeMsg = {
+            from: { id: parseInt(userId) },
+            chat: { id: msg.chat.id },
+          };
+          await showApiKeyMenu(bot, fakeMsg);
+        }, 2000);
       } catch (error) {
         console.error("Error updating API key:", error);
-        await bot.sendMessage(msg.chat.id, errorMessage); // ✅ Add await
+        await bot.sendMessage(msg.chat.id, errorMessage, {
+          disable_web_page_preview: true,
+        });
       }
     });
   } catch (error) {
     console.error("Error in updateApiKey:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage); // ✅ Add await and fix chatId
+    await bot.sendMessage(query.message.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+    });
   }
 };
 
@@ -190,15 +239,19 @@ const viewApiKey = async (bot, query) => {
 
     if (!user) {
       await bot.sendMessage(
-        // ✅ Add await
         chatId,
-        "You need to run /start command first to register."
+        "You need to run /start command first to register.",
+        {
+          disable_web_page_preview: true,
+        }
       );
       return;
     }
 
     if (!user.encryptedApiKey) {
-      await bot.sendMessage(chatId, "No API key found. Please set it first"); // ✅ Add await
+      await bot.sendMessage(chatId, "No API key found. Please set it first", {
+        disable_web_page_preview: true,
+      });
       return;
     }
 
@@ -209,11 +262,14 @@ const viewApiKey = async (bot, query) => {
       [Key.callback("⬅️ Back to Menu", "back_to_menu")],
     ]).inline();
 
-    // ✅ Add await and simplify
     const shouldBeDeletedMsg = await bot.sendMessage(
       chatId,
       `Your API key is: \`${apikey}\`\n\nThis message will be deleted in 30 seconds.`,
-      { ...keyboard, parse_mode: "Markdown" }
+      keyboard,
+      {
+        disable_web_page_preview: true,
+        parse_mode: "Markdown",
+      }
     );
 
     // Auto-delete after 30 seconds
@@ -228,8 +284,11 @@ const viewApiKey = async (bot, query) => {
     console.error("Error viewing API key:", error);
     await bot.sendMessage(
       query.message.chat.id,
-      "Failed to retrieve API key. Please try again."
-    ); // ✅ Add await and fix chatId
+      "Failed to retrieve API key. Please try again.",
+      {
+        disable_web_page_preview: true,
+      }
+    );
   }
 };
 
@@ -241,7 +300,9 @@ const deleteApiKey = async (bot, query) => {
     const user = await SaifurlsBotUsers.findOne({ userId });
 
     if (!user || !user.encryptedApiKey) {
-      return await bot.sendMessage(chatId, "No API key found to delete."); // ✅ Add await
+      return await bot.sendMessage(chatId, "No API key found to delete.", {
+        disable_web_page_preview: true,
+      });
     }
 
     const keyboard = Keyboard.make([
@@ -250,14 +311,18 @@ const deleteApiKey = async (bot, query) => {
     ]).inline();
 
     await bot.sendMessage(
-      // ✅ Add await
       chatId,
       "⚠️ Are you sure you want to delete your API key?",
-      keyboard
+      keyboard,
+      {
+        disable_web_page_preview: true,
+      }
     );
   } catch (error) {
     console.error("Error in deleteApiKey:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage);
+    await bot.sendMessage(query.message.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+    });
   }
 };
 
@@ -271,15 +336,37 @@ const handleDeleteConfirmation = async (bot, query) => {
         { userId },
         { $unset: { encryptedApiKey: "", lookupHash: "" } }
       );
-      await bot.sendMessage(chatId, "✅ API key deleted successfully!");
+      await bot.sendMessage(chatId, "✅ API key deleted successfully!", {
+        disable_web_page_preview: true,
+      });
+
+      setTimeout(async () => {
+        const fakeMsg = {
+          from: { id: parseInt(userId) },
+          chat: { id: chatId },
+        };
+        await showApiKeyMenu(bot, fakeMsg);
+      }, 2000);
     } else if (query.data === "cancel_delete_api_key") {
-      await bot.sendMessage(chatId, "❌ API key deletion cancelled.");
+      await bot.sendMessage(chatId, "❌ API key deletion cancelled.", {
+        disable_web_page_preview: true,
+      });
+
+      setTimeout(async () => {
+        const fakeMsg = {
+          from: { id: parseInt(userId) },
+          chat: { id: chatId },
+        };
+        await showApiKeyMenu(bot, fakeMsg);
+      }, 1500);
     }
 
     await bot.answerCallbackQuery(query.id);
   } catch (error) {
     console.error("Error handling delete confirmation:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage);
+    await bot.sendMessage(query.message.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+    });
   }
 };
 

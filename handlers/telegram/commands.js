@@ -1,6 +1,9 @@
 const SaifurlsBotUsers = require("../../db/mongodb.js");
 const { Keyboard } = require("telegram-keyboard");
-const { handleSetDomain } = require("../../services/telegram/shorturl.services");
+const {
+  handleSetDomain,
+} = require("../../services/telegram/shorturl.services");
+const { showMainMenu } = require("../../services/telegram/mainmenu.services");
 const {
   welcomeMessage,
   welcomeBackMessage,
@@ -13,13 +16,14 @@ const {
 const deleteMessage = async (bot, msg) => {
   try {
     await bot.deleteMessage(msg.chat.id, msg.message_id);
-  } catch (error) {
-    console.error("Error deleting message:", error);
+  } catch {
+    // Silent fail for delete message
   }
 };
 
 const commandList = [
   { command: "start", description: "Start the bot and register" },
+  { command: "menu", description: "Show main menu" },
   { command: "apikey", description: "Manage your API keys" },
   { command: "shorturl", description: "Manage short URLs" },
   { command: "urls", description: "Alias for shorturl command" },
@@ -27,11 +31,14 @@ const commandList = [
   { command: "help", description: "Show help information" },
   { command: "contact", description: "Contact information" },
   { command: "about", description: "About this bot" },
+  { command: "todo", description: "Setup guide for new users" },
+  { command: "justtest", description: "Get test API key (SoM/Converge only)" },
   { command: "ping", description: "Test bot responsiveness" },
 ];
 
 const formattedCommandList = [
   { command: "/start", description: "Start the bot and register" },
+  { command: "/menu", description: "Show main menu" },
   { command: "/apikey", description: "Manage your API keys" },
   { command: "/shorturl", description: "Manage short URLs" },
   { command: "/urls", description: "Alias for shorturl command" },
@@ -39,18 +46,22 @@ const formattedCommandList = [
   { command: "/help", description: "Show help information" },
   { command: "/contact", description: "Contact information" },
   { command: "/about", description: "About this bot" },
+  { command: "/todo", description: "Setup guide for new users" },
+  { command: "/justtest", description: "Get test API key (SoM/Converge only)" },
   { command: "/ping", description: "Test bot responsiveness" },
 ];
 
 const handleCommands = async (bot, msg) => {
   if (!msg || !msg.text) {
-    console.error("Invalid message received:", msg);
     return;
   }
   try {
     switch (msg.text) {
       case "/start":
         await startCommand(bot, msg);
+        break;
+      case "/menu":
+        await showMainMenu(bot, msg);
         break;
       case "/apikey":
         await apikeyCommand(bot, msg);
@@ -71,8 +82,15 @@ const handleCommands = async (bot, msg) => {
       case "/about":
         await aboutCommand(bot, msg);
         break;
+      case "/todo":
+        await todoCommand(bot, msg);
+        break;
+      case "/justtest":
+        await justtestCommand(bot, msg);
+        break;
       case "/ping":
         await bot.sendMessage(msg.chat.id, "Pong! 🏓", {
+          disable_web_page_preview: true,
           parse_mode: "Markdown",
         });
         break;
@@ -81,14 +99,15 @@ const handleCommands = async (bot, msg) => {
           msg.chat.id,
           "Unknown command. Please use /help to see available commands.",
           {
+            disable_web_page_preview: true,
             parse_mode: "Markdown",
           }
         );
         break;
     }
-  } catch (error) {
-    console.error("Error handling command:", error);
+  } catch {
     await bot.sendMessage(msg.chat.id, errorMessage, {
+      disable_web_page_preview: true,
       parse_mode: "Markdown",
     });
   }
@@ -98,7 +117,9 @@ const helpCommand = async (bot, msg) => {
   try {
     const chatId = msg.chat.id;
 
-    await bot.sendMessage(chatId, "Loading Help menu...");
+    await bot.sendMessage(chatId, "Loading Help menu...", {
+      disable_web_page_preview: true,
+    });
 
     const menuKeyboard = Keyboard.make([
       ["/start", "/help"],
@@ -114,14 +135,15 @@ const helpCommand = async (bot, msg) => {
           .map((cmd) => `${cmd.command} - ${cmd.description}`)
           .join("\n")
       ),
+      menuKeyboard,
       {
+        disable_web_page_preview: true,
         parse_mode: "Markdown",
-        ...menuKeyboard,
       }
     );
-  } catch (error) {
-    console.error("Error in helpCommand:", error);
+  } catch {
     await bot.sendMessage(msg.chat.id, errorMessage, {
+      disable_web_page_preview: true,
       parse_mode: "Markdown",
     });
   }
@@ -134,9 +156,9 @@ const contactCommand = async (bot, msg) => {
       parse_mode: "Markdown",
       disable_web_page_preview: true,
     });
-  } catch (error) {
-    console.error("Error in contactCommand:", error);
+  } catch {
     await bot.sendMessage(msg.chat.id, errorMessage, {
+      disable_web_page_preview: true,
       parse_mode: "Markdown",
     });
   }
@@ -147,11 +169,12 @@ const aboutCommand = async (bot, msg) => {
     const chatId = msg.chat.id;
 
     await bot.sendMessage(chatId, aboutMessage, {
+      disable_web_page_preview: true,
       parse_mode: "Markdown",
     });
-  } catch (error) {
-    console.error("Error in aboutCommand:", error);
+  } catch {
     await bot.sendMessage(msg.chat.id, errorMessage, {
+      disable_web_page_preview: true,
       parse_mode: "Markdown",
     });
   }
@@ -170,9 +193,14 @@ const startCommand = async (bot, msg) => {
         chatId,
         welcomeBackMessage.replace("{user}", userFirstName),
         {
+          disable_web_page_preview: true,
           parse_mode: "Markdown",
         }
       );
+
+      setTimeout(async () => {
+        await showMainMenu(bot, msg);
+      }, 1500);
       return;
     }
 
@@ -185,46 +213,50 @@ const startCommand = async (bot, msg) => {
       isBot: msg.from.is_bot || false,
     });
     await newUser.save();
+
     await bot.sendMessage(
       chatId,
       welcomeMessage.replace("{user}", userFirstName),
       {
+        disable_web_page_preview: true,
         parse_mode: "Markdown",
       }
     );
-  } catch (error) {
-    console.error("Error in startCommand:", error);
+
+    setTimeout(async () => {
+      await showMainMenu(bot, msg);
+    }, 2000);
+  } catch {
     await bot.sendMessage(msg.chat.id, errorMessage, {
+      disable_web_page_preview: true,
       parse_mode: "Markdown",
     });
   }
 };
 
-// API Key command handler
 const apikeyCommand = async (bot, msg) => {
   try {
     const {
       showApiKeyMenu,
     } = require("../../services/telegram/apikey.services");
     await showApiKeyMenu(bot, msg);
-  } catch (error) {
-    console.error("Error in apikeyCommand:", error);
+  } catch {
     await bot.sendMessage(msg.chat.id, errorMessage, {
+      disable_web_page_preview: true,
       parse_mode: "Markdown",
     });
   }
 };
 
-// ✅ Short URL command handler
 const shorturlCommand = async (bot, msg) => {
   try {
     const {
       showShortUrlMenu,
     } = require("../../services/telegram/shorturl.services");
     await showShortUrlMenu(bot, msg);
-  } catch (error) {
-    console.error("Error in shorturlCommand:", error);
+  } catch {
     await bot.sendMessage(msg.chat.id, errorMessage, {
+      disable_web_page_preview: true,
       parse_mode: "Markdown",
     });
   }
@@ -240,11 +272,114 @@ const setdomainCommand = async (bot, msg) => {
       },
       from: { id: msg.from.id },
     };
-    
+
     await handleSetDomain(bot, fakeQuery);
-  } catch (error) {
-    console.error("Error in setdomainCommand:", error);
+  } catch {
     await bot.sendMessage(msg.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+      parse_mode: "Markdown",
+    });
+  }
+};
+
+const todoCommand = async (bot, msg) => {
+  try {
+    const existingUser = await SaifurlsBotUsers.findOne({
+      userId: msg.from.id.toString(),
+    });
+    const chatId = msg.chat.id;
+
+    // Check if user exists
+    if (!existingUser) {
+      await bot.sendMessage(
+        chatId,
+        "❌ **User not found!**\n\n" +
+          "You need to run `/start` command first to register.\n\n" +
+          "Please run: `/start`",
+        {
+          disable_web_page_preview: true,
+          parse_mode: "Markdown",
+        }
+      );
+      return;
+    }
+
+    // Check if user has API key
+    const hasApiKey = existingUser.encryptedApiKey ? true : false;
+
+    if (!hasApiKey) {
+      const todoMessage =
+        "🔑 **API Key Setup Required**\n\n" +
+        "To use this bot, you need to set up your API key. Follow these steps:\n\n" +
+        "**Step 1:** Go to [urls.saifdev.xyz](https://urls.saifdev.xyz)\n" +
+        "• If you have an account: [Sign In](https://urls.saifdev.xyz/#/signin)\n" +
+        "• If you don't have an account: [Sign Up](https://urls.saifdev.xyz/#/signup)\n\n" +
+        "**Step 2:** After signing in, go to your [Profile Page](https://urls.saifdev.xyz/#/profile)\n" +
+        "• Scroll down and verify your account if not already verified\n\n" +
+        "**Step 3:** Go to the [Developer Page](https://urls.saifdev.xyz/#/developer)\n" +
+        "• Copy your API key\n\n" +
+        "**Step 4:** Return to this bot and run `/apikey`\n" +
+        "• Set your API key using the menu\n\n" +
+        "Once completed, you'll be able to use all bot features! 🚀\n\n" +
+        "---\n" +
+        "🧪 **Alternative for SoM/Converge participants:**\n" +
+        "If you're part of Summer of Making or Converge, you can run `/justtest` to get a temporary shared API key for testing purposes only.";
+
+      await bot.sendMessage(chatId, todoMessage, {
+        disable_web_page_preview: true,
+        parse_mode: "Markdown",
+      });
+      return;
+    }
+
+    // User has everything set up
+    await bot.sendMessage(
+      chatId,
+      "✅ **Setup Complete!**\n\n" +
+        "Your account is properly configured:\n" +
+        "• ✅ User registered\n" +
+        "• ✅ API key configured\n\n" +
+        "You can now use all bot features! Use `/help` to see available commands.",
+      {
+        disable_web_page_preview: true,
+        parse_mode: "Markdown",
+      }
+    );
+  } catch {
+    await bot.sendMessage(msg.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+      parse_mode: "Markdown",
+    });
+  }
+};
+
+const justtestCommand = async (bot, msg) => {
+  try {
+    const chatId = msg.chat.id;
+
+    const testMessage =
+      "🧪 **Test API Key for SoM/Converge**\n\n" +
+      "⚠️ **Important Warning:**\n" +
+      "This is a shared public API key for testing purposes only.\n\n" +
+      "**Test API Key:** `test_api_key_som_converge_2024`\n\n" +
+      "📝 **Notes:**\n" +
+      "• This key is for Summer of Making and Converge participants only\n" +
+      "• Limited functionality and rate limits apply\n" +
+      "• **This key will be deleted after the testing process**\n" +
+      "• For production use, please get your own API key via `/todo`\n\n" +
+      "To use this test key:\n" +
+      "1. Run `/apikey`\n" +
+      "2. Select 'Set API Key'\n" +
+      "3. Enter the test key above\n\n" +
+      "⚠️ Remember: This is temporary and for testing only!";
+
+    await bot.sendMessage(chatId, testMessage, {
+      disable_web_page_preview: true,
+      parse_mode: "Markdown",
+    });
+  } catch {
+    await bot.sendMessage(msg.chat.id, errorMessage, {
+      disable_web_page_preview: true,
       parse_mode: "Markdown",
     });
   }
@@ -257,6 +392,8 @@ module.exports = {
   helpCommand,
   contactCommand,
   aboutCommand,
+  todoCommand,
+  justtestCommand,
   apikeyCommand,
   shorturlCommand,
   setdomainCommand,

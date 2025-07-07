@@ -4,6 +4,7 @@ const welcomeMessage = `
 I'm your URL management bot! Here's what I can do:
 
 📋 **Available Commands:**
+• /todo - **Start here!** Complete setup guide
 • /help - Show all commands
 • /apikey - Manage your API keys
 • /about - About this bot  
@@ -11,7 +12,7 @@ I'm your URL management bot! Here's what I can do:
 • /shorten <url> - Shorten a URL
 • /expand <url> - Expand a URL
 
-Just send me any URL and I'll process it for you!
+💡 **New user?** Run \`/todo\` first to get started!
     `;
 
 const welcomeBackMessage = `🤖 **Welcome back {user}!**

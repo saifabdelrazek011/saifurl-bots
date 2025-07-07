@@ -10,6 +10,7 @@ const {
   checkShortUrlExists,
   getUserPreferredDomain,
   setUserPreferredDomain,
+  validateUrlExists,
 } = require("../../utils/api/shorturl.js");
 
 const showShortUrlMenu = async (bot, msg) => {
@@ -23,6 +24,7 @@ const showShortUrlMenu = async (bot, msg) => {
         msg.chat.id,
         "You need to run /start command first to register.",
         {
+          disable_web_page_preview: true,
           parse_mode: "Markdown",
         }
       );
@@ -37,6 +39,7 @@ const showShortUrlMenu = async (bot, msg) => {
         msg.chat.id,
         "🔑 You need to set up your API key first. Use /apikey to manage your API key.",
         {
+          disable_web_page_preview: true,
           parse_mode: "Markdown",
         }
       );
@@ -57,16 +60,22 @@ const showShortUrlMenu = async (bot, msg) => {
         Key.callback("🗑️ Delete URL", "delete_url"),
       ],
       [Key.callback("🌐 Domain Preference", "set_domain")],
+      [Key.callback("🔙 Back to Main Menu", "back_to_main")],
     ]).inline();
 
     await bot.sendMessage(
       msg.chat.id,
       "🔗 **Short URL Management**\n\nChoose an action:",
-      { ...keyboard, parse_mode: "Markdown" }
+      keyboard,
+      {
+        disable_web_page_preview: true,
+        parse_mode: "Markdown",
+      }
     );
   } catch (error) {
     console.error("Error in showShortUrlMenu:", error);
     await bot.sendMessage(msg.chat.id, errorMessage, {
+      disable_web_page_preview: true,
       parse_mode: "Markdown",
     });
   }
@@ -77,16 +86,25 @@ const handleViewMyUrls = async (bot, query) => {
     const chatId = query.message.chat.id;
     const userId = query.from.id;
 
-    // Create a fake message object for the utility function
     const fakeMessage = {
       from: { id: userId },
       chat: { id: chatId },
     };
 
     await getMyShortUrls(bot, fakeMessage);
+
+    setTimeout(async () => {
+      const fakeMsg = {
+        from: { id: userId },
+        chat: { id: chatId },
+      };
+      await showShortUrlMenu(bot, fakeMsg);
+    }, 3000);
   } catch (error) {
     console.error("Error in handleViewMyUrls:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage);
+    await bot.sendMessage(query.message.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+    });
   }
 };
 
@@ -100,7 +118,10 @@ const handleCheckUrl = async (bot, query) => {
       "🔍 **Check Short URL**\n\nPlease send the URL ID you want to check:\n\n" +
         "Example: `507f1f77bcf86cd799439011`\n\n" +
         "_Use /shorturl → My URLs to see your URLs and their IDs._",
-      { parse_mode: "Markdown" }
+      {
+        disable_web_page_preview: true,
+        parse_mode: "Markdown",
+      }
     );
 
     bot.once("message", async (msg) => {
@@ -117,14 +138,26 @@ const handleCheckUrl = async (bot, query) => {
         };
 
         await checkShortUrlExists(bot, fakeMessage, shorturlId);
+
+        setTimeout(async () => {
+          const fakeMsg = {
+            from: { id: userId },
+            chat: { id: msg.chat.id },
+          };
+          await showShortUrlMenu(bot, fakeMsg);
+        }, 2000);
       } catch (error) {
         console.error("Error processing check URL request:", error);
-        await bot.sendMessage(msg.chat.id, errorMessage);
+        await bot.sendMessage(msg.chat.id, errorMessage, {
+          disable_web_page_preview: true,
+        });
       }
     });
   } catch (error) {
     console.error("Error in handleCheckUrl:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage);
+    await bot.sendMessage(query.message.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+    });
   }
 };
 
@@ -138,7 +171,10 @@ const handleCreateUrl = async (bot, query) => {
     if (!user || !user.encryptedApiKey) {
       await bot.sendMessage(
         chatId,
-        "🔑 Please set up your API key first using /apikey command."
+        "🔑 Please set up your API key first using /apikey command.",
+        {
+          disable_web_page_preview: true,
+        }
       );
       return;
     }
@@ -149,7 +185,10 @@ const handleCreateUrl = async (bot, query) => {
         "Examples:\n" +
         "• `https://example.com`\n" +
         "• `https://very-long-url.com/path/to/page`",
-      { parse_mode: "Markdown" }
+      {
+        disable_web_page_preview: true,
+        parse_mode: "Markdown",
+      }
     );
 
     // Wait for user to send the URL
@@ -165,7 +204,10 @@ const handleCreateUrl = async (bot, query) => {
         if (!fullUrl.startsWith("http://") && !fullUrl.startsWith("https://")) {
           await bot.sendMessage(
             msg.chat.id,
-            "❌ Please provide a valid URL starting with http:// or https://"
+            "❌ Please provide a valid URL starting with http:// or https://",
+            {
+              disable_web_page_preview: true,
+            }
           );
           return;
         }
@@ -183,16 +225,24 @@ const handleCreateUrl = async (bot, query) => {
         await bot.sendMessage(
           msg.chat.id,
           `🔗 **URL to shorten:** ${fullUrl}\n\nChoose short URL type:`,
-          { ...keyboard, parse_mode: "Markdown" }
+          keyboard,
+          {
+            disable_web_page_preview: true,
+            parse_mode: "Markdown",
+          }
         );
       } catch (error) {
         console.error("Error processing URL:", error);
-        await bot.sendMessage(msg.chat.id, errorMessage);
+        await bot.sendMessage(msg.chat.id, errorMessage, {
+          disable_web_page_preview: true,
+        });
       }
     });
   } catch (error) {
     console.error("Error in handleCreateUrl:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage);
+    await bot.sendMessage(query.message.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+    });
   }
 };
 
@@ -219,11 +269,20 @@ const handleCreateRandom = async (bot, query) => {
 
     await createShortUrl(bot, fakeMessage, fullUrl);
 
-    // Clean up
     delete global.tempUrls[userId];
+
+    setTimeout(async () => {
+      const fakeMsg = {
+        from: { id: userId },
+        chat: { id: chatId },
+      };
+      await showShortUrlMenu(bot, fakeMsg);
+    }, 2500);
   } catch (error) {
     console.error("Error in handleCreateRandom:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage);
+    await bot.sendMessage(query.message.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+    });
   }
 };
 
@@ -286,16 +345,27 @@ const handleCreateCustom = async (bot, query) => {
 
         await createShortUrl(bot, fakeMessage, fullUrl, customShort);
 
-        // Clean up
         delete global.tempUrls[userId];
+
+        setTimeout(async () => {
+          const fakeMsg = {
+            from: { id: userId },
+            chat: { id: msg.chat.id },
+          };
+          await showShortUrlMenu(bot, fakeMsg);
+        }, 2500);
       } catch (error) {
         console.error("Error processing custom URL:", error);
-        await bot.sendMessage(msg.chat.id, errorMessage);
+        await bot.sendMessage(msg.chat.id, errorMessage, {
+          disable_web_page_preview: true,
+        });
       }
     });
   } catch (error) {
     console.error("Error in handleCreateCustom:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage);
+    await bot.sendMessage(query.message.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+    });
   }
 };
 
@@ -328,14 +398,26 @@ const handleGetUrlInfo = async (bot, query) => {
         };
 
         await getShortUrlInfo(bot, fakeMessage, shortCode);
+
+        setTimeout(async () => {
+          const fakeMsg = {
+            from: { id: userId },
+            chat: { id: msg.chat.id },
+          };
+          await showShortUrlMenu(bot, fakeMsg);
+        }, 2500);
       } catch (error) {
         console.error("Error processing URL info request:", error);
-        await bot.sendMessage(msg.chat.id, errorMessage);
+        await bot.sendMessage(msg.chat.id, errorMessage, {
+          disable_web_page_preview: true,
+        });
       }
     });
   } catch (error) {
     console.error("Error in handleGetUrlInfo:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage);
+    await bot.sendMessage(query.message.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+    });
   }
 };
 
@@ -405,27 +487,42 @@ const handleUpdateUrl = async (bot, query) => {
                   newShortUrl
                 );
 
-                // Clean up
                 delete global.tempUpdateIds[userId];
                 delete global.tempUpdateUrls[userId];
+
+                setTimeout(async () => {
+                  const fakeMsg = {
+                    from: { id: userId },
+                    chat: { id: msg3.chat.id },
+                  };
+                  await showShortUrlMenu(bot, fakeMsg);
+                }, 2500);
               } catch (error) {
                 console.error("Error processing new short URL:", error);
-                await bot.sendMessage(msg3.chat.id, errorMessage);
+                await bot.sendMessage(msg3.chat.id, errorMessage, {
+                  disable_web_page_preview: true,
+                });
               }
             });
           } catch (error) {
             console.error("Error processing new full URL:", error);
-            await bot.sendMessage(msg2.chat.id, errorMessage);
+            await bot.sendMessage(msg2.chat.id, errorMessage, {
+              disable_web_page_preview: true,
+            });
           }
         });
       } catch (error) {
         console.error("Error processing URL ID:", error);
-        await bot.sendMessage(msg.chat.id, errorMessage);
+        await bot.sendMessage(msg.chat.id, errorMessage, {
+          disable_web_page_preview: true,
+        });
       }
     });
   } catch (error) {
     console.error("Error in handleUpdateUrl:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage);
+    await bot.sendMessage(query.message.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+    });
   }
 };
 
@@ -447,6 +544,19 @@ const handleDeleteUrl = async (bot, query) => {
           return;
         }
 
+        const isValid = await validateUrlExists(shorturlId);
+        if (!isValid) {
+          await bot.sendMessage(
+            msg.chat.id,
+            "❌ The provided short URL ID does not exist, or is invalid or doesn't return to the user.\n\n" +
+              "Please check the ID and try again.",
+            {
+              disable_web_page_preview: true,
+            }
+          );
+          return;
+        }
+
         const shorturlId = msg.text.trim();
 
         // Confirmation keyboard
@@ -458,16 +568,24 @@ const handleDeleteUrl = async (bot, query) => {
         await bot.sendMessage(
           msg.chat.id,
           `⚠️ **Confirm Deletion**\n\nAre you sure you want to delete this URL?\n\n**ID:** \`${shorturlId}\`\n\n_This action cannot be undone._`,
-          { ...keyboard, parse_mode: "Markdown" }
+          keyboard,
+          {
+            disable_web_page_preview: true,
+            parse_mode: "Markdown",
+          }
         );
       } catch (error) {
         console.error("Error processing delete request:", error);
-        await bot.sendMessage(msg.chat.id, errorMessage);
+        await bot.sendMessage(msg.chat.id, errorMessage, {
+          disable_web_page_preview: true,
+        });
       }
     });
   } catch (error) {
     console.error("Error in handleDeleteUrl:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage);
+    await bot.sendMessage(query.message.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+    });
   }
 };
 
@@ -477,7 +595,17 @@ const handleDeleteConfirmation = async (bot, query) => {
     const userId = query.from.id;
 
     if (query.data === "cancel_delete") {
-      await bot.sendMessage(chatId, "❌ Deletion cancelled.");
+      await bot.sendMessage(chatId, "❌ Deletion cancelled.", {
+        disable_web_page_preview: true,
+      });
+      
+      setTimeout(async () => {
+        const fakeMsg = {
+          from: { id: userId },
+          chat: { id: chatId },
+        };
+        await showShortUrlMenu(bot, fakeMsg);
+      }, 1500);
       return;
     }
 
@@ -490,10 +618,20 @@ const handleDeleteConfirmation = async (bot, query) => {
       };
 
       await deleteShortUrl(bot, fakeMessage, shorturlId);
+      
+      setTimeout(async () => {
+        const fakeMsg = {
+          from: { id: userId },
+          chat: { id: chatId },
+        };
+        await showShortUrlMenu(bot, fakeMsg);
+      }, 2000);
     }
   } catch (error) {
     console.error("Error in handleDeleteConfirmation:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage);
+    await bot.sendMessage(query.message.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+    });
   }
 };
 
@@ -514,7 +652,9 @@ const handleBackToShortUrlMenu = async (bot, query) => {
     await showShortUrlMenu(bot, fakeMsg);
   } catch (error) {
     console.error("Error going back to short URL menu:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage);
+    await bot.sendMessage(query.message.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+    });
   }
 };
 
@@ -564,7 +704,11 @@ const handleDomainSelection = async (bot, query) => {
       chatId,
       `✅ **Domain preference updated!**\n\n` +
         `Your new preferred domain: **${domain}**\n\n` +
-        `All future short URLs will use: \`${domain}/...\``
+        `All future short URLs will use: \`${domain}/...\``,
+      {
+        disable_web_page_preview: true,
+        parse_mode: "Markdown",
+      }
     );
 
     setTimeout(async () => {
@@ -576,7 +720,9 @@ const handleDomainSelection = async (bot, query) => {
     }, 2000);
   } catch (error) {
     console.error("Error in handleDomainSelection:", error);
-    await bot.sendMessage(query.message.chat.id, errorMessage);
+    await bot.sendMessage(query.message.chat.id, errorMessage, {
+      disable_web_page_preview: true,
+    });
   }
 };
 

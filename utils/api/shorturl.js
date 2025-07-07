@@ -109,27 +109,27 @@ const checkShortUrlExists = async (bot, message, shorturlId) => {
         `✅ Short URL exists and is accessible.`
       );
     } else {
-      await bot.sendMessage(
-        message.chat.id,
-        `❌ ${
-          response.data?.message || "Short URL not found or not accessible."
-        }`
-      );
+      const isValid = await validateUrlExists(shorturlId, apiKey);
+      if (!isValid) {
+        await bot.sendMessage(
+          message.chat.id,
+          `❌ ${
+            response.data?.message || "Short URL not found or not accessible."
+          }`
+        );
+      }
     }
   } catch (error) {
-    console.error("Error checking short URL:", error);
-
-    if (error.message.includes("API key not found")) {
-      await bot.sendMessage(message.chat.id, "🔑 " + error.message);
-    } else if (error.response?.status === 404) {
+    console.error("error", error.response?.data?.message);
+    if (error?.response?.status === 404) {
       await bot.sendMessage(message.chat.id, "❌ Short URL not found.");
-    } else if (error.response?.status === 403) {
+    } else if (error?.response?.status === 400) {
       await bot.sendMessage(
         message.chat.id,
-        "🚫 You don't have permission to check this short URL."
+        error?.response?.data?.message || errorMessage
       );
     } else {
-      await bot.sendMessage(message.chat.id, errorMessage);
+      await bot.sendMessage(message.chat.id, "❌ Invalid API key");
     }
   }
 };
@@ -162,7 +162,7 @@ const getMyShortUrls = async (bot, message) => {
       shortUrls.forEach((url, index) => {
         messageText += `🔗 **${index + 1}.** [${
           url.short
-        }](https://${userDomain}/s/${url.short})\n`;
+        }](https://${userDomain}/${url.short})\n`;
         messageText += `📝 **ID:** \`${url._id}\`\n`;
         messageText += `🎯 **Original:** ${
           url.full.length > 50 ? url.full.substring(0, 50) + "..." : url.full
@@ -187,7 +187,7 @@ const getMyShortUrls = async (bot, message) => {
           const singleUrlText =
             `🔗 **Short URL ${i + 1}**\n` +
             `📝 **ID:** \`${url._id}\`\n` +
-            `🌐 **Short:** [${url.short}](https://${userDomain}/s/${url.short})\n` +
+            `🌐 **Short:** [${url.short}](https://${userDomain}/${url.short})\n` +
             `🎯 **Original:** ${url.full}\n` +
             `📊 **Clicks:** ${url.clicks || 0}\n` +
             `📅 **Created:** ${new Date(url.createdAt).toLocaleDateString()}\n`;
@@ -211,19 +211,24 @@ const getMyShortUrls = async (bot, message) => {
       );
     }
   } catch (error) {
-    console.error("Error fetching short URLs:", error);
+    console.error("Error fetching short URLs:", error.status);
 
     if (error.message.includes("API key not found")) {
       await bot.sendMessage(message.chat.id, "🔑 " + error.message);
-    } else if (error.response?.status === 404) {
+    } else if (error?.status === 404) {
       await bot.sendMessage(
         message.chat.id,
         "📋 You don't have any short URLs yet."
       );
-    } else if (error.response?.status === 403) {
+    } else if (error?.status === 403) {
       await bot.sendMessage(
         message.chat.id,
         "🚫 Access denied. Please check your API key."
+      );
+    } else if (error?.status === 400) {
+      await bot.sendMessage(
+        message.chat.id,
+        error.data?.message || errorMessage
       );
     } else {
       await bot.sendMessage(message.chat.id, errorMessage);
@@ -271,7 +276,7 @@ const createShortUrl = async (bot, message, fullUrl, customShort = null) => {
 
       const messageText =
         `✅ **Short URL Created Successfully!**\n\n` +
-        `🌐 **Short URL:** [https://${userDomain}/s/${shortCode}](https://${userDomain}/s/${shortCode})\n` +
+        `🌐 **Short URL:** [https://${userDomain}/${shortCode}](https://${userDomain}/${shortCode})\n` +
         `🎯 **Original URL:** ${fullUrl}\n\n` +
         `📋 Use /shorturl to manage your URLs`;
 
@@ -314,6 +319,24 @@ const updateShortUrl = async (
   newShortUrl
 ) => {
   try {
+    const apiKey = await getUserApiKey(message.from.id);
+    if (!apiKey) {
+      await bot.sendMessage(
+        message.chat.id,
+        "🔑 API key not found. Please set your API key first using /apikey command."
+      );
+      return;
+    }
+    const isValid = await validateUrlExists(shorturlId);
+    if (!isValid) {
+      await bot.sendMessage(
+        message.chat.id,
+        "❌ The provided short URL ID does not exist, or is invalid or doesn't return to the user.\n\n" +
+          "Please check the ID and try again."
+      );
+      return;
+    }
+
     if (!shorturlId || !newFullUrl || !newShortUrl) {
       await bot.sendMessage(
         message.chat.id,
@@ -326,7 +349,14 @@ const updateShortUrl = async (
       return;
     }
 
-    const apiKey = await getUserApiKey(message.from.id);
+    if (!isValid) {
+      await bot.sendMessage(
+        message.chat.id,
+        "❌ The provided short URL ID does not exist or is invalid.\n\n" +
+          "Please check the ID and try again."
+      );
+      return;
+    }
 
     const response = await api.patch(
       `/shorturls/${shorturlId}`,
@@ -348,7 +378,7 @@ const updateShortUrl = async (
 
       const messageText =
         `✅ **Short URL Updated Successfully!**\n\n` +
-        `🌐 **New Short URL:** [https://${userDomain}/s/${updatedUrl.short}](https://${userDomain}/s/${updatedUrl.short})\n` +
+        `🌐 **New Short URL:** [https://${userDomain}/${updatedUrl.short}](https://${userDomain}/${updatedUrl.short})\n` +
         `🎯 **New Original URL:** ${updatedUrl.full}\n` +
         `📊 **Clicks:** ${updatedUrl.clicks || 0}`;
 
@@ -461,7 +491,7 @@ const getShortUrlInfo = async (bot, message, shortCode) => {
 
       const messageText =
         `📊 **Short URL Information**\n\n` +
-        `🌐 **Short URL:** [https://${userDomain}/s/${url.short}](https://${userDomain}/s/${url.short})\n` +
+        `🌐 **Short URL:** [https://${userDomain}/${url.short}](https://${userDomain}/${url.short})\n` +
         `🎯 **Original URL:** ${url.full}\n` +
         `📊 **Total Clicks:** ${url.clicks || 0}\n` +
         `📅 **Created:** ${new Date(url.createdAt).toLocaleDateString()}\n` +

@@ -23,6 +23,12 @@ const {
   handleDomainSelection,
 } = require("../../services/telegram/shorturl.services");
 
+const {
+  handleMainMenuCallback,
+  handleBackToMain,
+  handleContactCallback,
+} = require("../../services/telegram/mainmenu.services");
+
 const { errorMessage } = require("./messages");
 
 const handleApiKeyCallback = async (bot, query) => {
@@ -91,16 +97,26 @@ const handleApiKeyCallback = async (bot, query) => {
       case "set_domain":
         await handleSetDomain(bot, query);
         break;
+      case "contact":
+        await handleContactCallback(bot, query);
+        break;
       case "cancel_delete":
         await handleShortUrlDeleteConfirmation(bot, query);
         break;
       case "back_to_shorturl_menu":
         await handleBackToShortUrlMenu(bot, query);
         break;
+      case "back_to_main":
+        await handleBackToMain(bot, query);
+        break;
 
       default:
+        // Handle main menu callbacks
+        if (query.data.startsWith("main_")) {
+          await handleMainMenuCallback(bot, query);
+        }
         // Handle dynamic delete confirmations for short URLs
-        if (query.data.startsWith("confirm_delete_")) {
+        else if (query.data.startsWith("confirm_delete_")) {
           await handleShortUrlDeleteConfirmation(bot, query);
         } else if (query.data.startsWith("domain_")) {
           await handleDomainSelection(bot, query);
