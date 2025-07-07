@@ -1,69 +1,96 @@
 const TelegramBot = require("node-telegram-bot-api");
-const { loadCommands, commandList } = require("../handlers/telegram");
+const { loadCommands } = require("../handlers/telegram");
 const { TELEGRAM_BOT_TOKEN, SERVER_URL } = require("../config/env");
+const { promisify } = require("util");
+const setTimeoutAsync = promisify(setTimeout);
 
 let botInstance = null;
-// Configuration
-const start = async (req, res) => {
+
+const start = async () => {
+  // ✅ Remove req, res parameters
   try {
     const token = TELEGRAM_BOT_TOKEN;
-    // Validate token
-    if (!token) {
-      console.error(
-        "❌ Please set your TELEGRAM_BOT_TOKEN environment variable!"
-      );
-      console.error(
-        "   Example: export TELEGRAM_BOT_TOKEN='123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'"
+
+    if (!token || !SERVER_URL) {
+      throw new Error(
+        "Telegram bot token or server URL is not set. Please check your environment variables."
       );
     }
 
-    const bot = await new TelegramBot(token);
-    botInstance = bot;
+    let bot;
 
-    bot.setWebHook(`${SERVER_URL}/webhook/telegram`);
-    // Load all commands using the loadCommands function
-    loadCommands(bot);
+    // Initialize the Telegram bot
+    try {
+      bot = new TelegramBot(token);
+      botInstance = bot;
+      console.log("✅ Telegram bot initialized successfully!");
+    } catch (error) {
+      console.error("❌ Error initializing Telegram bot:", error.message);
+      throw error;
+    }
 
-    // Error handling
-    bot.on("webhook_error", (error) => {
-      console.error("🚨 Webhook error:", error.message);
-    });
+    try {
+      // Await webhook setup
+      await bot.setWebHook(`${SERVER_URL}/webhook/telegram`);
+      // Error handling
+      bot.on("webhook_error", (error) => {
+        // Wrap the async logic in an IIFE and handle the promise
+        (async () => {
+          console.error("❌ Webhook error:", error.message);
+          console.error("Full error:", error);
 
-    // Bot ready confirmation
-    bot
-      .getMe()
-      .then(() => {
-        console.log(`✅ Bot started successfully!`);
+          await setTimeoutAsync(5000);
+          console.log("🔄 Retrying to reset webhook...");
 
-        bot
-          .setMyCommands(commandList)
-          .then(() => {
-            console.log("✅ Bot commands set successfully!");
-          })
-          .catch((error) => {
-            console.error("❌ Failed to set bot commands:", error.message);
-          });
-      })
-      .catch((error) => {
-        console.error("❌ Failed to start bot:", error.message);
-        if (error.message.includes("404")) {
-          console.error("💡 This usually means your bot token is invalid.");
-        } else if (error.message.includes("BOT_COMMAND_INVALID")) {
-          console.error("💡 Bot command format is invalid. Commands must:");
-          console.error("   - Not include '/' prefix");
-          console.error("   - Not include parameters like <url>");
-          console.error("   - Be lowercase");
-          console.error("   - Be 1-32 characters long");
-        }
+          try {
+            console.log("🔄 Attempting to reset webhook...");
+            await bot.setWebHook(`${SERVER_URL}/webhook/telegram`);
+            console.log("✅ Webhook reset successfully!");
+          } catch (resetError) {
+            console.error("❌ Failed to reset webhook:", resetError.message);
+          }
+        })().catch((asyncError) => {
+          console.error(
+            "❌ Error in webhook error handler:",
+            asyncError.message
+          );
+        });
       });
-    // res.status(200).json({
-    //   status: "success",
-    //   message: "Bot started successfully!",
-    // });
+    } catch (error) {
+      console.error("❌ Error setting webhook:", error.message);
+      throw error;
+    }
+
+    console.log("✅ Webhook set successfully!");
+
+    try {
+      await bot
+        .getMe()
+        .then((botInfo) => {
+          console.log(`✅ Bot info retrieved: ${botInfo.username}`);
+          try {
+            console.log("🔄 Loading commands...");
+            loadCommands(bot);
+            console.log("✅ Commands loaded successfully!");
+          } catch (error) {
+            console.error("❌ Error loading commands:", error.message);
+            throw error;
+          }
+        })
+        .catch((error) => {
+          console.error("❌ Error getting bot info:", error.message);
+          throw error;
+        });
+    } catch (error) {
+      console.error("❌ Error getting bot info:", error.message);
+      throw error;
+    }
   } catch (error) {
     console.error("❌ Error starting bot:", error.message);
+    throw error;
   }
 };
+
 const getBot = () => {
   try {
     if (!botInstance) {
@@ -71,7 +98,6 @@ const getBot = () => {
     }
     return botInstance;
   } catch (error) {
-    console.error("❌ Error getting bot instance:", error.message);
     throw error;
   }
 };

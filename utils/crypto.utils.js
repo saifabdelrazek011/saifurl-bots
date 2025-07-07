@@ -7,50 +7,62 @@ const {
 } = require("crypto");
 const { ENCRYPTION_KEY, HASH_SALT } = require("../config/env"); // Importing from env.js for consistency
 
+if (!ENCRYPTION_KEY || !HASH_SALT) {
+  throw new Error(
+    "Encryption key or hash salt is not set. Please check your environment variables."
+  );
+}
+
 const algorithm = "aes-256-cbc";
 const salt = HASH_SALT;
 
 const getValidatedKey = () => {
-  if (!ENCRYPTION_KEY) {
-    throw new Error(
-      "Encryption key is not set. Please set the ENCRYPTION_KEY environment variable."
-    );
-  }
+  try {
+    if (!ENCRYPTION_KEY) {
+      throw new Error(
+        "Encryption key is not set. Please set the ENCRYPTION_KEY environment variable."
+      );
+    }
 
-  if (typeof ENCRYPTION_KEY === "string") {
-    if (
-      ENCRYPTION_KEY.length === 64 &&
-      /^[0-9a-fA-F]{64}$/.test(ENCRYPTION_KEY)
-    ) {
-      const keyBuffer = Buffer.from(ENCRYPTION_KEY, "hex");
-      if (keyBuffer.length !== 32) {
+    if (typeof ENCRYPTION_KEY === "string") {
+      if (
+        ENCRYPTION_KEY.length === 64 &&
+        /^[0-9a-fA-F]{64}$/.test(ENCRYPTION_KEY)
+      ) {
+        const keyBuffer = Buffer.from(ENCRYPTION_KEY, "hex");
+        if (keyBuffer.length !== 32) {
+          throw new Error(
+            "Encryption key must be exactly 32 bytes long for AES-256-CBC."
+          );
+        }
+        return keyBuffer;
+      }
+
+      const derivedKey = scryptSync(ENCRYPTION_KEY, salt, 32);
+      if (derivedKey.length !== 32) {
+        throw new Error(
+          "Derived key must be exactly 32 bytes long for AES-256-CBC."
+        );
+      }
+      return derivedKey;
+    }
+
+    if (Buffer.isBuffer(ENCRYPTION_KEY)) {
+      if (ENCRYPTION_KEY.length !== 32) {
         throw new Error(
           "Encryption key must be exactly 32 bytes long for AES-256-CBC."
         );
       }
-      return keyBuffer;
+      return ENCRYPTION_KEY;
     }
 
-    const derivedKey = scryptSync(ENCRYPTION_KEY, salt, 32);
-    if (derivedKey.length !== 32) {
-      throw new Error(
-        "Derived key must be exactly 32 bytes long for AES-256-CBC."
-      );
-    }
-    return derivedKey;
+    throw new Error(
+      "Encryption key must be a Buffer. Please check your configuration."
+    );
+  } catch (error) {
+    console.error("Key validation error:", error);
+    throw new Error("Failed to validate encryption key");
   }
-  if (Buffer.isBuffer(ENCRYPTION_KEY)) {
-    if (ENCRYPTION_KEY.length !== 32) {
-      throw new Error(
-        "Encryption key must be exactly 32 bytes long for AES-256-CBC."
-      );
-    }
-    return ENCRYPTION_KEY;
-  }
-
-  throw new Error(
-    "Encryption key must be a Buffer. Please check your configuration."
-  );
 };
 
 const encrypt = (text) => {
@@ -60,7 +72,15 @@ const encrypt = (text) => {
     }
 
     const key = getValidatedKey();
+    if (key.length !== 32) {
+      throw new Error(
+        "Encryption key must be exactly 32 bytes long for AES-256-CBC."
+      );
+    }
     const iv = randomBytes(16);
+    if (iv.length !== 16) {
+      throw new Error("IV must be exactly 16 bytes long for AES-256-CBC.");
+    }
 
     const cipher = createCipheriv(algorithm, key, iv);
 

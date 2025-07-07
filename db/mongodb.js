@@ -43,6 +43,12 @@ const saifurlsBotUsersSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  preferredDomain: {
+    type: String,
+    enum: ["sa.died.pw", "sa.ix.tc"],
+    default: "sa.died.pw",
+    required: false,
+  },
 });
 
 const SaifurlsBotUsers = mongoose.model(

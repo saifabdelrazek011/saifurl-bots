@@ -1,27 +1,25 @@
 const SaifurlsBotUsers = require("../../db/mongodb.js");
 const { errorMessage } = require("../../handlers/telegram/messages.js");
 const { Keyboard, Key } = require("telegram-keyboard");
+const { checkApiKeyExists } = require("../../utils/api/api.utils.js");
+const { deleteMessage } = require("../../handlers/telegram/commands.js");
+
 const {
   encrypt,
   decrypt,
   createLookupHash,
 } = require("../../utils/crypto.utils");
 
-const deleteMessage = async (bot, msg) => {
-  try {
-    await bot.deleteMessage(msg.chat.id, msg.message_id);
-  } catch (error) {
-    console.error("Error deleting message:", error);
-  }
-};
-
 const showApiKeyMenu = async (bot, msg) => {
+  // ✅ This should be for commands, not callbacks
   try {
     const existingUser = await SaifurlsBotUsers.findOne({
       userId: msg.from.id.toString(),
     });
+
     if (!existingUser) {
       await bot.sendMessage(
+        // ✅ Add await
         msg.chat.id,
         "You need to run /start command first to register.",
         {
@@ -38,7 +36,6 @@ const showApiKeyMenu = async (bot, msg) => {
         ? [Key.callback("🔄 Update API Key", "update_api_key")]
         : [Key.callback("🔑 Set API Key", "set_api_key")],
 
-      // Only show View and Delete if API key exists
       ...(existingApiKey
         ? [
             [Key.callback("👁️ View API Key", "view_api_key")],
@@ -47,196 +44,242 @@ const showApiKeyMenu = async (bot, msg) => {
         : []),
     ]).inline();
 
-    bot.sendMessage(msg.chat.id, "Please choose an action:", keyboard);
+    await bot.sendMessage(msg.chat.id, "Please choose an action:", keyboard); // ✅ Add await
   } catch (error) {
-    console.error("Error in apikeyCommand:", error);
-    bot.sendMessage(msg.chat.id, errorMessage, {
+    console.error("Error in showApiKeyMenu:", error);
+    await bot.sendMessage(msg.chat.id, errorMessage, {
+      // ✅ Add await
       parse_mode: "Markdown",
     });
   }
 };
 
-const setApiKey = async (bot, chatId) => {
-  bot.sendMessage(chatId, "Please send your API key:");
-  bot.once("message", async (msg) => {
-    const apiKey = msg.text;
-
-    if (!apiKey) {
-      return bot.sendMessage(msg.chat.id, "API key cannot be empty.");
-    }
-    const encryptedData = encrypt(apiKey);
-    const lookupHash = createLookupHash(apiKey);
-
-    try {
-      const existingUser = await SaifurlsBotUsers.findOne({
-        userId: msg.from.id,
-      });
-
-      // If user does not exist, prompt them to register
-      if (!existingUser) {
-        bot.sendMessage(
-          msg.chat.id,
-          "You should run /start command first to register."
-        );
-      }
-
-      // Check if the user already has an API key
-      if (existingUser && existingUser.encryptedApiKey) {
-        bot.sendMessage(
-          msg.chat.id,
-          "API key already exists. Use Update API Key to change it."
-        );
-      }
-
-      // If user does not exist, create a new record
-      existingUser.encryptedApiKey = encryptedData;
-      existingUser.lookupHash = lookupHash;
-
-      await existingUser.save();
-      bot.sendMessage(msg.chat.id, "API key set successfully!");
-    } catch (error) {
-      console.error("Error setting API key:", error);
-      bot.sendMessage(msg.chat.id, errorMessage);
-    }
-  });
-};
-
-const updateApiKey = async (bot, chatId) => {
-  bot.sendMessage(chatId, "Please send your new API key:");
-  bot.once("message", async (msg) => {
-    const apiKey = msg.text;
-
-    if (!apiKey) {
-      return bot.sendMessage(msg.chat.id, "API key cannot be empty.");
-    }
-    const encryptedData = encrypt(apiKey);
-    const lookupHash = createLookupHash(apiKey);
-
-    try {
-      const existingUser = await SaifurlsBotUsers.findOne({
-        userId: msg.from.id,
-      });
-
-      if (!existingUser.encryptedApiKey) {
-        bot.sendMessage(
-          msg.chat.id,
-          "No existing API key found. Please set it first. Use /apikey command."
-        );
-        return;
-      }
-
-      if (existingUser) {
-        // If user exists, update the API key
-        await SaifurlsBotUsers.updateOne(
-          { userId: msg.from.id },
-          { encryptedApiKey: encryptedData, lookupHash },
-          { new: true }
-        );
-        bot.sendMessage(msg.chat.id, "API key updated successfully!");
-      } else {
-        bot.sendMessage(
-          msg.chat.id,
-          "No existing API key found. Please set it first."
-        );
-      }
-    } catch (error) {
-      console.error("Error updating API key:", error);
-      bot.sendMessage(msg.chat.id, errorMessage);
-    }
-  });
-};
-
-// const deleteApiKeyMessage = (bot, chatId) => {
-//   bot.sendMessage(chatId, "Are you sure you want to delete your API key?", {
-//     reply_markup: {
-//       inline_keyboard: [
-//         [
-//           { text: "Yes", callback_data: "confirm_delete_api_key_msg" },
-//           { text: "No", callback_data: "cancel_delete_api_key_msg" },
-//         ],
-//       ],
-//     },
-//   });
-// };
-
-const viewApiKey = async (bot, chatId) => {
+const setApiKey = async (bot, query) => {
   try {
-    const user = await SaifurlsBotUsers.findOne({ userId: chatId });
-    const apikey = user ? decrypt(user.encryptedApiKey) : null;
+    const chatId = query.message.chat.id; // ✅ Fix: Use query.message.chat.id
+    const userId = query.from.id.toString(); // ✅ Fix: Use query.from.id
 
-    const keyboard = Keyboard.make([
-      [Key.callback("🗑️ Delete API Key Message", "delete_api_key_msg")],
-      [Key.callback("⬅️ Back to API Menu", "main_menu")],
-    ]).inline();
+    const existingUser = await SaifurlsBotUsers.findOne({ userId });
 
-    if (!apikey) {
-      bot.sendMessage(chatId, "No API key found.");
+    if (!existingUser) {
+      await bot.sendMessage(
+        // ✅ Add await
+        chatId,
+        "You should run /start command first to register."
+      );
       return;
     }
 
-    const shouldBeDeletedMsg = await bot.sendMessage(
-      chatId,
-      `Your API key is: \n${apikey} \nThis message will be deleted in 30 seconds.`,
-      keyboard
-    );
+    // ✅ Check if API key already exists BEFORE asking for input
+    if (existingUser.encryptedApiKey) {
+      await bot.sendMessage(
+        // ✅ Add await
+        chatId,
+        "API key already exists. Use Update API Key to change it."
+      );
+      return;
+    }
 
-    bot.on("callback_query", async (query) => {
-      const { data } = query;
-      if (data === "delete_api_key_msg") {
-        await deleteMessage(bot, shouldBeDeletedMsg);
-        bot.sendMessage(chatId, "API key message deleted.");
-      }
-      if (data === "main_menu") {
-        await showApiKeyMenu(bot, msg);
+    await bot.sendMessage(chatId, "Please send your API key:"); // ✅ Add await
+
+    bot.once("message", async (msg) => {
+      try {
+        // ✅ Delete the user's API key message for security
+        await deleteMessage(bot, msg);
+
+        const apiKey = msg.text;
+
+        if (!apiKey || apiKey.trim() === "") {
+          return await bot.sendMessage(msg.chat.id, "API key cannot be empty."); // ✅ Add await
+        }
+
+        const apiKeyExists = await checkApiKeyExists(apiKey); // ✅ Add await
+        if (!apiKeyExists) {
+          return await bot.sendMessage(msg.chat.id, "Invalid API key."); // ✅ Add await
+        }
+
+        const encryptedData = encrypt(apiKey);
+        const lookupHash = createLookupHash(apiKey);
+
+        // Update the existing user
+        existingUser.encryptedApiKey = encryptedData;
+        existingUser.lookupHash = lookupHash;
+
+        await existingUser.save(); // ✅ Add await
+        await bot.sendMessage(msg.chat.id, "✅ API key set successfully!"); // ✅ Add await
+      } catch (error) {
+        console.error("Error setting API key:", error);
+        await bot.sendMessage(msg.chat.id, errorMessage); // ✅ Add await
       }
     });
-
-    if (!shouldBeDeletedMsg) {
-      return bot.sendMessage(chatId, "Failed to retrieve API key.");
-    }
-    setTimeout(async () => {
-      await deleteMessage(bot, shouldBeDeletedMsg);
-    }, 30000);
   } catch (error) {
-    console.error("Error viewing API key:", error);
-    bot.sendMessage(chatId, "Failed to retrieve API key. Please try again.");
+    console.error("Error in setApiKey:", error);
+    await bot.sendMessage(query.message.chat.id, errorMessage); // ✅ Add await and fix chatId
   }
 };
 
-const deleteApiKey = async (bot, chatId) => {
+const updateApiKey = async (bot, query) => {
   try {
-    const user = await SaifurlsBotUsers.findOne({ userId: chatId });
+    const chatId = query.message.chat.id; // ✅ Fix: Use query.message.chat.id
+    const userId = query.from.id.toString(); // ✅ Fix: Use query.from.id
 
-    if (!user || !user.encryptedApiKey) {
-      return bot.sendMessage(chatId, "No API key found to delete.");
+    const existingUser = await SaifurlsBotUsers.findOne({ userId });
+
+    if (!existingUser) {
+      await bot.sendMessage(
+        // ✅ Add await
+        chatId,
+        "You need to run /start command first to register."
+      );
+      return;
     }
-    const keyboard = Keyboard.make([
-      [Key.callback("Yes", "confirm_delete_api_key")],
-      [Key.callback("No", "cancel_delete_api_key")],
-    ]).inline();
 
-    bot.sendMessage(
-      chatId,
-      "Are you sure you want to delete your API key?",
-      keyboard
-    );
+    if (!existingUser.encryptedApiKey) {
+      await bot.sendMessage(
+        // ✅ Add await
+        chatId,
+        "No existing API key found. Please set it first using /apikey command."
+      );
+      return;
+    }
 
-    bot.once("callback_query", async (query) => {
-      const { data } = query;
+    await bot.sendMessage(chatId, "Please send your new API key:"); // ✅ Add await
 
-      if (data === "confirm_delete_api_key") {
+    bot.once("message", async (msg) => {
+      try {
+        await deleteMessage(bot, msg); // ✅ Add await and delete for security
+
+        const apiKey = msg.text;
+
+        if (!apiKey || apiKey.trim() === "") {
+          return await bot.sendMessage(msg.chat.id, "API key cannot be empty."); // ✅ Add await
+        }
+
+        const apiKeyExists = await checkApiKeyExists(apiKey); // ✅ Add await
+        if (!apiKeyExists) {
+          return await bot.sendMessage(msg.chat.id, "Invalid API key."); // ✅ Add await
+        }
+
+        const encryptedData = encrypt(apiKey);
+        const lookupHash = createLookupHash(apiKey);
+
+        // ✅ Fix: Use userId (string) instead of msg.from.id (number)
         await SaifurlsBotUsers.updateOne(
-          { userId: chatId },
-          { $unset: { encryptedApiKey: "", lookupHash: "" } }
+          { userId }, // Use the string userId
+          { encryptedApiKey: encryptedData, lookupHash }
         );
-        bot.sendMessage(chatId, "API key deleted successfully!");
-      } else if (data === "cancel_delete_api_key") {
-        bot.sendMessage(chatId, "API key deletion cancelled.");
+
+        await bot.sendMessage(msg.chat.id, "✅ API key updated successfully!"); // ✅ Add await
+      } catch (error) {
+        console.error("Error updating API key:", error);
+        await bot.sendMessage(msg.chat.id, errorMessage); // ✅ Add await
       }
     });
   } catch (error) {
-    console.error("Error deleting API key:", error);
-    bot.sendMessage(chatId, errorMessage);
+    console.error("Error in updateApiKey:", error);
+    await bot.sendMessage(query.message.chat.id, errorMessage); // ✅ Add await and fix chatId
+  }
+};
+
+const viewApiKey = async (bot, query) => {
+  try {
+    const chatId = query.message.chat.id; // ✅ Fix: Use query.message.chat.id
+    const userId = query.from.id.toString(); // ✅ Fix: Use query.from.id
+
+    const user = await SaifurlsBotUsers.findOne({ userId });
+
+    if (!user) {
+      await bot.sendMessage(
+        // ✅ Add await
+        chatId,
+        "You need to run /start command first to register."
+      );
+      return;
+    }
+
+    if (!user.encryptedApiKey) {
+      await bot.sendMessage(chatId, "No API key found. Please set it first"); // ✅ Add await
+      return;
+    }
+
+    const apikey = decrypt(user.encryptedApiKey);
+
+    const keyboard = Keyboard.make([
+      [Key.callback("🗑️ Delete Message", "delete_api_key_msg")],
+      [Key.callback("⬅️ Back to Menu", "back_to_menu")],
+    ]).inline();
+
+    // ✅ Add await and simplify
+    const shouldBeDeletedMsg = await bot.sendMessage(
+      chatId,
+      `Your API key is: \`${apikey}\`\n\nThis message will be deleted in 30 seconds.`,
+      { ...keyboard, parse_mode: "Markdown" }
+    );
+
+    // Auto-delete after 30 seconds
+    setTimeout(async () => {
+      try {
+        await deleteMessage(bot, shouldBeDeletedMsg);
+      } catch (error) {
+        console.error("Error auto-deleting message:", error);
+      }
+    }, 30000);
+  } catch (error) {
+    console.error("Error viewing API key:", error);
+    await bot.sendMessage(
+      query.message.chat.id,
+      "Failed to retrieve API key. Please try again."
+    ); // ✅ Add await and fix chatId
+  }
+};
+
+const deleteApiKey = async (bot, query) => {
+  try {
+    const chatId = query.message.chat.id; // ✅ Fix: Use query.message.chat.id
+    const userId = query.from.id.toString(); // ✅ Fix: Use query.from.id
+
+    const user = await SaifurlsBotUsers.findOne({ userId });
+
+    if (!user || !user.encryptedApiKey) {
+      return await bot.sendMessage(chatId, "No API key found to delete."); // ✅ Add await
+    }
+
+    const keyboard = Keyboard.make([
+      [Key.callback("✅ Yes", "confirm_delete_api_key")],
+      [Key.callback("❌ No", "cancel_delete_api_key")],
+    ]).inline();
+
+    await bot.sendMessage(
+      // ✅ Add await
+      chatId,
+      "⚠️ Are you sure you want to delete your API key?",
+      keyboard
+    );
+  } catch (error) {
+    console.error("Error in deleteApiKey:", error);
+    await bot.sendMessage(query.message.chat.id, errorMessage);
+  }
+};
+
+const handleDeleteConfirmation = async (bot, query) => {
+  try {
+    const chatId = query.message.chat.id;
+    const userId = query.from.id.toString();
+
+    if (query.data === "confirm_delete_api_key") {
+      await SaifurlsBotUsers.updateOne(
+        { userId },
+        { $unset: { encryptedApiKey: "", lookupHash: "" } }
+      );
+      await bot.sendMessage(chatId, "✅ API key deleted successfully!");
+    } else if (query.data === "cancel_delete_api_key") {
+      await bot.sendMessage(chatId, "❌ API key deletion cancelled.");
+    }
+
+    await bot.answerCallbackQuery(query.id);
+  } catch (error) {
+    console.error("Error handling delete confirmation:", error);
+    await bot.sendMessage(query.message.chat.id, errorMessage);
   }
 };
 
@@ -246,4 +289,5 @@ module.exports = {
   updateApiKey,
   viewApiKey,
   deleteApiKey,
+  handleDeleteConfirmation,
 };

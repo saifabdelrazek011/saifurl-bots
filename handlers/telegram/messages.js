@@ -31,9 +31,37 @@ An error occurred while processing your request. Please try again later.
 If the issue persists, please /contact the bot administrator.
 `;
 
+const contactMessage = `
+📞 **Need Help?**
+
+For support and assistance:
+• 📧 Email: [dev@saifdev.xyz](mailto:dev@saifdev.xyz)
+• 📝 Contact Form: [Click here](https://urls.saifdev.xyz/#/contact)
+• 💬 Response time: Usually within 24 hours
+
+We're here to help! 🚀
+`;
+
+const aboutMessage = `🤖 **About Me**
+
+I'm a URL management bot built by Saif Abdelrazek and I'm here to help!
+
+I'm designed to help you manage your URLs efficiently. You can shorten, expand, and get information about your URLs with ease.
+
+**What I Can Do:**
+- Shorten URLs
+- Expand URLs
+- Manage API keys
+- Get help and support
+
+If you have any questions or feedback, feel free to reach Saif! Run /contact to get in touch.
+`;
+
 module.exports = {
   welcomeMessage,
   welcomeBackMessage,
   helpMessage,
   errorMessage,
+  contactMessage,
+  aboutMessage,
 };
