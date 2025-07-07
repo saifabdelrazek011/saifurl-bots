@@ -385,6 +385,24 @@ const justtestCommand = async (bot, msg) => {
   }
 };
 
+const setupBotCommands = async (bot) => {
+  try {
+    // Delete all existing commands to clean up old/invalid ones
+    await bot.deleteMyCommands();
+
+    // Convert our commandList to the format expected by Telegram
+    const telegramCommands = commandList.map((cmd) => ({
+      command: cmd.command,
+      description: cmd.description,
+    }));
+
+    // Set the new commands
+    await bot.setMyCommands(telegramCommands);
+  } catch {
+    // Silent fail for command setup
+  }
+};
+
 module.exports = {
   handleCommands,
   commandList,
@@ -398,4 +416,5 @@ module.exports = {
   shorturlCommand,
   setdomainCommand,
   deleteMessage,
+  setupBotCommands,
 };

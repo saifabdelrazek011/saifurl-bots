@@ -1,19 +1,10 @@
 // Import commands from commands.js
-const { handleCommands, commandList } = require("./commands");
+const { handleCommands, setupBotCommands } = require("./commands");
 const { handleApiKeyCallback } = require("./callbacks");
 
 const loadCommands = async (bot) => {
   try {
-    // ✅ Set bot commands
-    try {
-      await bot.setMyCommands(commandList);
-      console.log("✅ Bot commands set successfully!");
-    } catch (error) {
-      console.error("❌ Error setting bot commands:", error.message);
-      throw error;
-    }
-
-    // ✅ Handle text messages
+    // Handle text messages
     bot.on("message", async (msg) => {
       if (!msg || !msg.text) {
         console.error("Invalid message received:", msg);
@@ -109,4 +100,4 @@ const loadCommands = async (bot) => {
   }
 };
 
-module.exports = { loadCommands };
+module.exports = { loadCommands, setupBotCommands };

@@ -1,5 +1,4 @@
 const TelegramBot = require("node-telegram-bot-api");
-const { loadCommands } = require("../handlers/telegram");
 const { TELEGRAM_BOT_TOKEN, SERVER_URL } = require("../config/env");
 const { promisify } = require("util");
 const setTimeoutAsync = promisify(setTimeout);
@@ -66,16 +65,14 @@ const start = async () => {
     try {
       await bot
         .getMe()
-        .then((botInfo) => {
-          console.log(`✅ Bot info retrieved: ${botInfo.username}`);
-          try {
-            console.log("🔄 Loading commands...");
-            loadCommands(bot);
-            console.log("✅ Commands loaded successfully!");
-          } catch (error) {
-            console.error("❌ Error loading commands:", error.message);
-            throw error;
-          }
+        .then(async () => {
+          const { loadCommands, setupBotCommands } = require("../handlers/telegram");
+          
+          // First, set up the bot commands with Telegram
+          await setupBotCommands(bot);
+          
+          // Then load the command handlers
+          loadCommands(bot);
         })
         .catch((error) => {
           console.error("❌ Error getting bot info:", error.message);
@@ -92,14 +89,10 @@ const start = async () => {
 };
 
 const getBot = () => {
-  try {
-    if (!botInstance) {
-      throw new Error("Bot instance is not initialized. Call start() first.");
-    }
-    return botInstance;
-  } catch (error) {
-    throw error;
+  if (!botInstance) {
+    throw new Error("Bot instance is not initialized. Call start() first.");
   }
+  return botInstance;
 };
 
 module.exports = {
