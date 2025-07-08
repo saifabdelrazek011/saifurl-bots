@@ -361,7 +361,7 @@ const justtestCommand = async (bot, msg) => {
       "🧪 **Test API Key for SoM/Converge**\n\n" +
       "⚠️ **Important Warning:**\n" +
       "This is a shared public API key for testing purposes only.\n\n" +
-      "**Test API Key:** `153b3ac432fd6b295cc40b8414b12ed34240cea5a588793eae6e6bc7000e0cd3`\n\n" +
+      "**Test API Key:** `427bccadd994830104878d2852897adb249aca9cfa0af691aade53bdac7059da`\n\n" +
       "📝 **Notes:**\n" +
       "• This key is for Summer of Making and Converge participants only\n" +
       "• Limited functionality and rate limits apply\n" +
