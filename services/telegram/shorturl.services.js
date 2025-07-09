@@ -74,7 +74,6 @@ const showShortUrlMenu = async (bot, msg) => {
       }
     );
   } catch (error) {
-    console.error("Error in showShortUrlMenu:", error);
     await bot.sendMessage(msg.chat.id, errorMessage, {
       disable_web_page_preview: true,
       parse_mode: "Markdown",
@@ -102,7 +101,6 @@ const handleViewMyUrls = async (bot, query) => {
       await showShortUrlMenu(bot, fakeMsg);
     }, 3000);
   } catch (error) {
-    console.error("Error in handleViewMyUrls:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage, {
       disable_web_page_preview: true,
     });
@@ -148,14 +146,12 @@ const handleCheckUrl = async (bot, query) => {
           await showShortUrlMenu(bot, fakeMsg);
         }, 2000);
       } catch (error) {
-        console.error("Error processing check URL request:", error);
         await bot.sendMessage(msg.chat.id, errorMessage, {
           disable_web_page_preview: true,
         });
       }
     });
   } catch (error) {
-    console.error("Error in handleCheckUrl:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage, {
       disable_web_page_preview: true,
     });
@@ -233,14 +229,12 @@ const handleCreateUrl = async (bot, query) => {
           }
         );
       } catch (error) {
-        console.error("Error processing URL:", error);
         await bot.sendMessage(msg.chat.id, errorMessage, {
           disable_web_page_preview: true,
         });
       }
     });
   } catch (error) {
-    console.error("Error in handleCreateUrl:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage, {
       disable_web_page_preview: true,
     });
@@ -280,7 +274,6 @@ const handleCreateRandom = async (bot, query) => {
       await showShortUrlMenu(bot, fakeMsg);
     }, 2500);
   } catch (error) {
-    console.error("Error in handleCreateRandom:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage, {
       disable_web_page_preview: true,
     });
@@ -348,14 +341,12 @@ const handleCreateCustom = async (bot, query) => {
           await showShortUrlMenu(bot, fakeMsg);
         }, 2500);
       } catch (error) {
-        console.error("Error processing custom URL:", error);
         await bot.sendMessage(msg.chat.id, errorMessage, {
           disable_web_page_preview: true,
         });
       }
     });
   } catch (error) {
-    console.error("Error in handleCreateCustom:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage, {
       disable_web_page_preview: true,
     });
@@ -400,14 +391,12 @@ const handleGetUrlInfo = async (bot, query) => {
           await showShortUrlMenu(bot, fakeMsg);
         }, 2500);
       } catch (error) {
-        console.error("Error processing URL info request:", error);
         await bot.sendMessage(msg.chat.id, errorMessage, {
           disable_web_page_preview: true,
         });
       }
     });
   } catch (error) {
-    console.error("Error in handleGetUrlInfo:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage, {
       disable_web_page_preview: true,
     });
@@ -491,28 +480,24 @@ const handleUpdateUrl = async (bot, query) => {
                   await showShortUrlMenu(bot, fakeMsg);
                 }, 2500);
               } catch (error) {
-                console.error("Error processing new short URL:", error);
                 await bot.sendMessage(msg3.chat.id, errorMessage, {
                   disable_web_page_preview: true,
                 });
               }
             });
           } catch (error) {
-            console.error("Error processing new full URL:", error);
             await bot.sendMessage(msg2.chat.id, errorMessage, {
               disable_web_page_preview: true,
             });
           }
         });
       } catch (error) {
-        console.error("Error processing URL ID:", error);
         await bot.sendMessage(msg.chat.id, errorMessage, {
           disable_web_page_preview: true,
         });
       }
     });
   } catch (error) {
-    console.error("Error in handleUpdateUrl:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage, {
       disable_web_page_preview: true,
     });
@@ -575,14 +560,12 @@ const handleDeleteUrl = async (bot, query) => {
           }
         );
       } catch (error) {
-        console.error("Error processing delete request:", error);
         await bot.sendMessage(msg.chat.id, errorMessage, {
           disable_web_page_preview: true,
         });
       }
     });
   } catch (error) {
-    console.error("Error in handleDeleteUrl:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage, {
       disable_web_page_preview: true,
     });
@@ -628,7 +611,6 @@ const handleDeleteConfirmation = async (bot, query) => {
       }, 2000);
     }
   } catch (error) {
-    console.error("Error in handleDeleteConfirmation:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage, {
       disable_web_page_preview: true,
     });
@@ -651,7 +633,6 @@ const handleBackToShortUrlMenu = async (bot, query) => {
 
     await showShortUrlMenu(bot, fakeMsg);
   } catch (error) {
-    console.error("Error going back to short URL menu:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage, {
       disable_web_page_preview: true,
     });
@@ -679,7 +660,6 @@ const handleSetDomain = async (bot, query) => {
       { ...keyboard, parse_mode: "Markdown" }
     );
   } catch (error) {
-    console.error("Error in handleSetDomain:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage);
   }
 };
@@ -719,7 +699,6 @@ const handleDomainSelection = async (bot, query) => {
       await showShortUrlMenu(bot, fakeMsg);
     }, 2000);
   } catch (error) {
-    console.error("Error in handleDomainSelection:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage, {
       disable_web_page_preview: true,
     });

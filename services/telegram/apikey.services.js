@@ -48,7 +48,6 @@ const showApiKeyMenu = async (bot, msg) => {
       disable_web_page_preview: true,
     });
   } catch (error) {
-    console.error("Error in showApiKeyMenu:", error);
     await bot.sendMessage(msg.chat.id, errorMessage, {
       parse_mode: "Markdown",
     });
@@ -131,14 +130,12 @@ const setApiKey = async (bot, query) => {
           await showApiKeyMenu(bot, fakeMsg);
         }, 2000);
       } catch (error) {
-        console.error("Error setting API key:", error);
         await bot.sendMessage(msg.chat.id, errorMessage, {
           disable_web_page_preview: true,
         });
       }
     });
   } catch (error) {
-    console.error("Error in setApiKey:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage);
   }
 };
@@ -220,14 +217,12 @@ const updateApiKey = async (bot, query) => {
           await showApiKeyMenu(bot, fakeMsg);
         }, 2000);
       } catch (error) {
-        console.error("Error updating API key:", error);
         await bot.sendMessage(msg.chat.id, errorMessage, {
           disable_web_page_preview: true,
         });
       }
     });
   } catch (error) {
-    console.error("Error in updateApiKey:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage, {
       disable_web_page_preview: true,
     });
@@ -280,12 +275,9 @@ const viewApiKey = async (bot, query) => {
     setTimeout(async () => {
       try {
         await deleteMessage(bot, shouldBeDeletedMsg);
-      } catch (error) {
-        console.error("Error auto-deleting message:", error);
-      }
+      } catch (error) {}
     }, 30000);
   } catch (error) {
-    console.error("Error viewing API key:", error);
     await bot.sendMessage(
       query.message.chat.id,
       "Failed to retrieve API key. Please try again.",
@@ -323,7 +315,6 @@ const deleteApiKey = async (bot, query) => {
       }
     );
   } catch (error) {
-    console.error("Error in deleteApiKey:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage, {
       disable_web_page_preview: true,
     });
@@ -368,7 +359,6 @@ const handleDeleteConfirmation = async (bot, query) => {
 
     await bot.answerCallbackQuery(query.id);
   } catch (error) {
-    console.error("Error handling delete confirmation:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage, {
       disable_web_page_preview: true,
     });

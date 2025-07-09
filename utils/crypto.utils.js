@@ -60,7 +60,6 @@ const getValidatedKey = () => {
       "Encryption key must be a Buffer. Please check your configuration."
     );
   } catch (error) {
-    console.error("Key validation error:", error);
     throw new Error("Failed to validate encryption key");
   }
 };
@@ -92,7 +91,6 @@ const encrypt = (text) => {
 
     return combined;
   } catch (error) {
-    console.error("Encryption error:", error);
     throw new Error("Failed to encrypt data");
   }
 };
@@ -131,7 +129,6 @@ const decrypt = (combinedData) => {
 
     return decrypted;
   } catch (error) {
-    console.error("Decryption error:", error);
     throw new Error("Failed to decrypt data");
   }
 };

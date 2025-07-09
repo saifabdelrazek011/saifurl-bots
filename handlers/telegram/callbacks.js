@@ -127,7 +127,6 @@ const handleApiKeyCallback = async (bot, query) => {
         break;
     }
   } catch (error) {
-    console.error("Error handling callback:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage);
   }
 };
@@ -148,12 +147,9 @@ const handleDeleteApiKeyMessage = async (bot, query) => {
     setTimeout(async () => {
       try {
         await bot.deleteMessage(chatId, confirmMsg.message_id);
-      } catch (error) {
-        console.error("Error deleting confirmation message:", error);
-      }
+      } catch (error) {}
     }, 3000);
   } catch (error) {
-    console.error("Error deleting API key message:", error);
     await bot.sendMessage(
       query.message.chat.id,
       "❌ Failed to delete message."
@@ -178,7 +174,6 @@ const handleBackToMenu = async (bot, query) => {
 
     await showApiKeyMenu(bot, fakeMsg);
   } catch (error) {
-    console.error("Error going back to menu:", error);
     await bot.sendMessage(
       query.message.chat.id,
       "❌ Failed to go back to menu."

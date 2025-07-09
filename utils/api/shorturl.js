@@ -37,7 +37,6 @@ const getUserPreferredDomain = async (userId) => {
 
     return user.preferredDomain || "sa.died.pw";
   } catch (error) {
-    console.error("Error getting user domain preference:", error);
     return "sa.died.pw";
   }
 };
@@ -79,12 +78,10 @@ const validateUrlExists = async (shorturlId, apiKey) => {
       },
     });
     if (response.status === 404) {
-      console.error("Short URL not found");
       return false; // URL does not exist
     }
     return response.status === 200 && response.data.success;
   } catch (error) {
-    console.error("Error validating short URL:", error);
     return false;
   }
 };
@@ -139,7 +136,6 @@ const checkShortUrlExists = async (bot, message, shorturlId) => {
       }
     }
   } catch (error) {
-    console.error("error", error);
     if (error?.response?.status === 404) {
       await bot.sendMessage(message.chat.id, "❌ Short URL not found.");
     } else if (error?.response?.status === 400) {
@@ -230,8 +226,6 @@ const getMyShortUrls = async (bot, message) => {
       );
     }
   } catch (error) {
-    console.error("Error fetching short URLs:", error.status);
-
     if (error.message.includes("API key not found")) {
       await bot.sendMessage(message.chat.id, "🔑 " + error.message);
     } else if (error?.status === 404) {
@@ -310,8 +304,6 @@ const createShortUrl = async (bot, message, fullUrl, customShort = null) => {
       );
     }
   } catch (error) {
-    console.error("Error creating short URL:", error);
-
     if (error.message.includes("API key not found")) {
       await bot.sendMessage(message.chat.id, "🔑 " + error.message);
     } else if (error.response?.status === 400) {
@@ -412,8 +404,6 @@ const updateShortUrl = async (
       );
     }
   } catch (error) {
-    console.error("Error updating short URL:", error);
-
     if (error.message.includes("API key not found")) {
       await bot.sendMessage(message.chat.id, "🔑 " + error.message);
     } else if (error.response?.status === 404) {
@@ -467,8 +457,6 @@ const deleteShortUrl = async (bot, message, shorturlId) => {
       );
     }
   } catch (error) {
-    console.error("Error deleting short URL:", error);
-
     if (error.message.includes("API key not found")) {
       await bot.sendMessage(message.chat.id, "🔑 " + error.message);
     } else if (error.response?.status === 404) {
@@ -527,8 +515,6 @@ const getShortUrlInfo = async (bot, message, shortCode) => {
       );
     }
   } catch (error) {
-    console.error("Error getting short URL info:", error);
-
     if (error.response?.status === 404) {
       await bot.sendMessage(message.chat.id, "❌ Short URL not found.");
     } else {

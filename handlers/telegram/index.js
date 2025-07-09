@@ -7,7 +7,6 @@ const loadCommands = async (bot) => {
     // Handle text messages
     bot.on("message", async (msg) => {
       if (!msg || !msg.text) {
-        console.error("Invalid message received:", msg);
         return;
       }
       try {
@@ -16,7 +15,6 @@ const loadCommands = async (bot) => {
           await handleCommands(bot, msg);
         }
       } catch (error) {
-        console.error("Error handling message:", error);
         await bot.sendMessage(
           msg.chat.id,
           "An error occurred while processing your message. Please try again later."
@@ -26,14 +24,12 @@ const loadCommands = async (bot) => {
 
     bot.on("callback_query", async (query) => {
       if (!query || !query.data) {
-        console.error("Invalid callback query received:", query);
         return;
       }
       try {
         // Handle all callback queries (API key and short URL callbacks)
         await handleApiKeyCallback(bot, query);
       } catch (error) {
-        console.error("Error handling callback query:", error);
         await bot.answerCallbackQuery(query.id, {
           text: "An error occurred while processing your request. Please try again later.",
           show_alert: true,
@@ -41,12 +37,10 @@ const loadCommands = async (bot) => {
       }
     });
 
-    // ✅ Handle bot errors
     bot.on("error", (error) => {
       console.error("Bot error occurred:", error);
     });
 
-    // ✅ Handle polling errors
     bot.on("polling_error", (error) => {
       console.error("Polling error occurred:", error);
     });

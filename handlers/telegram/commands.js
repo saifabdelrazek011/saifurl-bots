@@ -1,4 +1,5 @@
 const SaifurlsBotUsers = require("../../db/mongodb.js");
+const { PUBLIC_API_KEY } = require("../../config/env.js");
 const { Keyboard } = require("telegram-keyboard");
 const {
   handleSetDomain,
@@ -361,7 +362,7 @@ const justtestCommand = async (bot, msg) => {
       "🧪 **Test API Key for SoM/Converge**\n\n" +
       "⚠️ **Important Warning:**\n" +
       "This is a shared public API key for testing purposes only.\n\n" +
-      "**Test API Key:** `e5eaabe55a1373d979524a6f6186f55df8962cbd256d610d9519c1fa5cbae5c2`\n\n" +
+      `**Test API Key:** ${PUBLIC_API_KEY}\n\n` +
       "📝 **Notes:**\n" +
       "• This key is for Summer of Making and Converge participants only\n" +
       "• Limited functionality and rate limits apply\n" +

@@ -10,6 +10,7 @@ module.exports = {
   NODE_ENV: process.env.NODE_ENV || "development",
   SERVER_URL: process.env.SERVER_URL,
   SAIFAPI_URL: process.env.SAIFAPI_URL || "http://localhost:3333/v1",
+  PUBLIC_API_KEY: process.env.PUBLIC_API_KEY || "public_api_key",
 
   MONGODB_URI: process.env.MONGODB_URI,
   ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,

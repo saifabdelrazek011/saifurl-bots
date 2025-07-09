@@ -47,14 +47,15 @@ const showMainMenu = async (bot, msg, customMessage = null) => {
         `${statusText}\n` +
         `🌐 **Preferred Domain:** ${preferredDomain}\n\n` +
         `Choose an option below:` +
-        (!hasApiKey ? "\n\n💡 **New user?** Run `/todo` for setup instructions!" : "");
+        (!hasApiKey
+          ? "\n\n💡 **New user?** Run `/todo` for setup instructions!"
+          : "");
 
     await bot.sendMessage(msg.chat.id, menuText, keyboard, {
       disable_web_page_preview: true,
       parse_mode: "Markdown",
     });
   } catch (error) {
-    console.error("Error in showMainMenu:", error);
     await bot.sendMessage(msg.chat.id, errorMessage, {
       disable_web_page_preview: true,
       parse_mode: "Markdown",
@@ -106,7 +107,6 @@ const handleMainMenuCallback = async (bot, query) => {
         break;
     }
   } catch (error) {
-    console.error("Error handling main menu callback:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage);
   }
 };
@@ -146,7 +146,6 @@ const handleAccountInfo = async (bot, msg) => {
       parse_mode: "Markdown",
     });
   } catch (error) {
-    console.error("Error in handleAccountInfo:", error);
     await bot.sendMessage(msg.chat.id, errorMessage);
   }
 };
@@ -176,7 +175,6 @@ const handleMainHelp = async (bot, msg) => {
       parse_mode: "Markdown",
     });
   } catch (error) {
-    console.error("Error in handleMainHelp:", error);
     await bot.sendMessage(msg.chat.id, errorMessage);
   }
 };
@@ -200,7 +198,6 @@ const handleMainContact = async (bot, msg) => {
       parse_mode: "Markdown",
     });
   } catch (error) {
-    console.error("Error in handleMainContact:", error);
     await bot.sendMessage(msg.chat.id, errorMessage);
   }
 };
@@ -219,7 +216,6 @@ const handleBackToMain = async (bot, query) => {
 
     await showMainMenu(bot, fakeMsg);
   } catch (error) {
-    console.error("Error going back to main menu:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage);
   }
 };
@@ -238,7 +234,6 @@ const handleContactCallback = async (bot, query) => {
 
     await handleMainContact(bot, fakeMsg);
   } catch (error) {
-    console.error("Error in handleContactCallback:", error);
     await bot.sendMessage(query.message.chat.id, errorMessage);
   }
 };

@@ -13,7 +13,6 @@ const checkApiKeyExists = async (apikey) => {
       return false;
     }
   } catch (error) {
-    console.error("Error checking API key existence:", error);
     return false;
   }
 };
