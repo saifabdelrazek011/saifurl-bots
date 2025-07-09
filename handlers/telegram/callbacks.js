@@ -8,7 +8,6 @@ const {
 } = require("../../services/telegram/apikey.services");
 
 const {
-  showShortUrlMenu,
   handleViewMyUrls,
   handleCreateUrl,
   handleCreateRandom,
@@ -59,6 +58,8 @@ const handleApiKeyCallback = async (bot, query) => {
         await deleteApiKey(bot, query);
         break;
       case "confirm_delete_api_key":
+        await handleDeleteConfirmation(bot, query);
+        break;
       case "cancel_delete_api_key":
         await handleDeleteConfirmation(bot, query);
         break;

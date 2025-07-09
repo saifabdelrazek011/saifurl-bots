@@ -183,9 +183,13 @@ const updateApiKey = async (bot, query) => {
         const apiKey = msg.text;
 
         if (!apiKey || apiKey.trim() === "") {
-          return await bot.sendMessage(msg.chat.id, "API key cannot be empty.", {
-            disable_web_page_preview: true,
-          });
+          return await bot.sendMessage(
+            msg.chat.id,
+            "API key cannot be empty.",
+            {
+              disable_web_page_preview: true,
+            }
+          );
         }
 
         const apiKeyExists = await checkApiKeyExists(apiKey); // ✅ Add await
@@ -232,8 +236,8 @@ const updateApiKey = async (bot, query) => {
 
 const viewApiKey = async (bot, query) => {
   try {
-    const chatId = query.message.chat.id; // ✅ Fix: Use query.message.chat.id
-    const userId = query.from.id.toString(); // ✅ Fix: Use query.from.id
+    const chatId = query.message.chat.id;
+    const userId = query.from.id.toString();
 
     const user = await SaifurlsBotUsers.findOne({ userId });
 
@@ -264,7 +268,7 @@ const viewApiKey = async (bot, query) => {
 
     const shouldBeDeletedMsg = await bot.sendMessage(
       chatId,
-      `Your API key is: \`${apikey}\`\n\nThis message will be deleted in 30 seconds.`,
+      `Your API key is: \n${apikey}\n\nThis message will be deleted in 30 seconds.`,
       keyboard,
       {
         disable_web_page_preview: true,
@@ -294,8 +298,8 @@ const viewApiKey = async (bot, query) => {
 
 const deleteApiKey = async (bot, query) => {
   try {
-    const chatId = query.message.chat.id; // ✅ Fix: Use query.message.chat.id
-    const userId = query.from.id.toString(); // ✅ Fix: Use query.from.id
+    const chatId = query.message.chat.id;
+    const userId = query.from.id.toString();
 
     const user = await SaifurlsBotUsers.findOne({ userId });
 
@@ -336,6 +340,7 @@ const handleDeleteConfirmation = async (bot, query) => {
         { userId },
         { $unset: { encryptedApiKey: "", lookupHash: "" } }
       );
+
       await bot.sendMessage(chatId, "✅ API key deleted successfully!", {
         disable_web_page_preview: true,
       });

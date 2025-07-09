@@ -15,7 +15,11 @@ const getUserApiKey = async (userId) => {
       );
     }
 
-    return decrypt(user.encryptedApiKey);
+    const apiKey = decrypt(user.encryptedApiKey);
+    if (!apiKey) {
+      throw new Error("Failed to decrypt API key. Please check your settings.");
+    }
+    return apiKey;
   } catch (error) {
     throw new Error(`Failed to get API key: ${error.message}`);
   }
@@ -58,14 +62,29 @@ const setUserPreferredDomain = async (userId, domain) => {
 
 const validateUrlExists = async (shorturlId, apiKey) => {
   try {
+    if (
+      !shorturlId ||
+      typeof shorturlId !== "string" ||
+      shorturlId.trim() === ""
+    ) {
+      throw new Error("Invalid short URL ID provided.");
+    }
+    if (!apiKey) {
+      throw new Error("API key not provided or invalid.");
+    }
     const response = await api.get(`/shorturls/check/${shorturlId}`, {
       headers: {
         "x-api-key": apiKey,
         "Content-Type": "application/json",
       },
     });
+    if (response.status === 404) {
+      console.error("Short URL not found");
+      return false; // URL does not exist
+    }
     return response.status === 200 && response.data.success;
   } catch (error) {
+    console.error("Error validating short URL:", error);
     return false;
   }
 };
@@ -120,7 +139,7 @@ const checkShortUrlExists = async (bot, message, shorturlId) => {
       }
     }
   } catch (error) {
-    console.error("error", error.response?.data?.message);
+    console.error("error", error);
     if (error?.response?.status === 404) {
       await bot.sendMessage(message.chat.id, "❌ Short URL not found.");
     } else if (error?.response?.status === 400) {
@@ -327,7 +346,7 @@ const updateShortUrl = async (
       );
       return;
     }
-    const isValid = await validateUrlExists(shorturlId);
+    const isValid = await validateUrlExists(shorturlId, apiKey);
     if (!isValid) {
       await bot.sendMessage(
         message.chat.id,

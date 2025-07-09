@@ -11,6 +11,7 @@ const {
   getUserPreferredDomain,
   setUserPreferredDomain,
   validateUrlExists,
+  getUserApiKey,
 } = require("../../utils/api/shorturl.js");
 
 const showShortUrlMenu = async (bot, msg) => {
@@ -330,14 +331,6 @@ const handleCreateCustom = async (bot, query) => {
           return;
         }
 
-        if (customShort.length < 3 || customShort.length > 20) {
-          await bot.sendMessage(
-            msg.chat.id,
-            "❌ Custom short URL must be between 3 and 20 characters long."
-          );
-          return;
-        }
-
         const fakeMessage = {
           from: { id: userId },
           chat: { id: msg.chat.id },
@@ -543,8 +536,17 @@ const handleDeleteUrl = async (bot, query) => {
         if (!msg.text || msg.from.id !== query.from.id) {
           return;
         }
+        const shorturlId = msg.text.trim();
+        const apikey = await getUserApiKey(msg.from.id);
+        if (!apikey) {
+          await bot.sendMessage(
+            msg.chat.id,
+            "🔑 You need to set up your API key first. Use /apikey to manage your API key."
+          );
+          return;
+        }
 
-        const isValid = await validateUrlExists(shorturlId);
+        const isValid = await validateUrlExists(shorturlId, apikey);
         if (!isValid) {
           await bot.sendMessage(
             msg.chat.id,
@@ -556,8 +558,6 @@ const handleDeleteUrl = async (bot, query) => {
           );
           return;
         }
-
-        const shorturlId = msg.text.trim();
 
         // Confirmation keyboard
         const keyboard = Keyboard.make([
@@ -598,7 +598,7 @@ const handleDeleteConfirmation = async (bot, query) => {
       await bot.sendMessage(chatId, "❌ Deletion cancelled.", {
         disable_web_page_preview: true,
       });
-      
+
       setTimeout(async () => {
         const fakeMsg = {
           from: { id: userId },
@@ -618,7 +618,7 @@ const handleDeleteConfirmation = async (bot, query) => {
       };
 
       await deleteShortUrl(bot, fakeMessage, shorturlId);
-      
+
       setTimeout(async () => {
         const fakeMsg = {
           from: { id: userId },
