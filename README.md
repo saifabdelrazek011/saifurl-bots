@@ -1,26 +1,26 @@
 # SaifURL Bots
 
 A collection of bots for the [SaifURL](https://github.com/saifabdelrazek011/saifurl) URL shortening service, providing seamless URL management across different platforms.
-However, what available now is the telegram bot
+However, what is available now is the Telegram bot
 
-## 🤖 Available Bots
+## Currently Available Bots
 
 ### Telegram Bot
 
-The primary bot for URL management through Telegram messaging platform.
+The primary bot for URL management through the Telegram messaging platform.
 
 **Features:**
 
-- 🔗 Shorten long URLs
-- 📊 View URL analytics and information
-- 🔑 Manage API keys securely
-- 🌐 Set preferred domains
-- 📋 List and manage your URLs
-- ✏️ Update existing short URLs
-- 🗑️ Delete URLs
-- 🧪 Test mode for developers
+- Shorten long URLs
+- View URL analytics and information
+- Manage API keys securely
+- Set preferred domains
+- List and manage your URLs
+- Update existing short URLs
+- Delete URLs
+- Test mode for developers
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Prerequisites
 
@@ -64,7 +64,7 @@ The primary bot for URL management through Telegram messaging platform.
    npm start
    ```
 
-## 📚 Bot Commands
+## Bot Commands
 
 ### Essential Commands
 
@@ -89,7 +89,7 @@ The primary bot for URL management through Telegram messaging platform.
 
 - `/justtest` - Get test API key (SoM/Converge participants only)
 
-## 🔧 Configuration
+## Configuration
 
 The bot uses environment variables for configuration:
 
@@ -100,7 +100,7 @@ The bot uses environment variables for configuration:
 | `WEBHOOK_URL` | Webhook URL for production         | No       |
 | `PORT`        | Server port (default: 3000)        | No       |
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 saifurl-bots/
@@ -129,14 +129,14 @@ saifurl-bots/
 └── routers/            # Express routes (webhook)
 ```
 
-## 🔒 Security Features
+## Security Features
 
 - **Encrypted API Storage**: User API keys are encrypted before storage
 - **User Validation**: All operations require user registration
 - **Input Validation**: URLs and inputs are validated before processing
 - **Rate Limiting**: API calls are managed to prevent abuse
 
-## 🎯 Getting Started as a User
+## Getting Started as a User
 
 1. **First Time Setup**
 
@@ -156,14 +156,14 @@ saifurl-bots/
    - Use `/menu` to access all features
    - Create, manage, and track your short URLs
 
-## 🧪 For Developers/Testers
+## For Developers/Testers
 
 If you're part of Summer of Making (SoM) or Converge:
 
 - Use `/justtest` to get a temporary test API key
 - This key has limited functionality and will be removed after testing
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -171,30 +171,28 @@ If you're part of Summer of Making (SoM) or Converge:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👨‍💻 Author
+## Author
 
 **Saif Abdelrazek**
 
 - GitHub: [@saifabdelrazek011](https://github.com/saifabdelrazek011)
 - Email: dev@saifdev.xyz
 
-## 🔗 Related Projects
+## Related Projects
 
-- [SaifURL](https://github.com/saifabdelrazek011/saifurl) - The main URL shortening service
+- [SaifAPI](https://github.com/saifabdelrazek011/saifapi) - The main API repo
 - [SaifURL Frontend](https://urls.saifdev.xyz) - Web interface for SaifURL
 
-## 📞 Support
+## Support
 
 Need help?
 
-- 📧 Email: [dev@saifdev.xyz](mailto:dev@saifdev.xyz)
-- 💬 Use `/contact` command in the bot
-- 🐛 Report issues on GitHub
+- Email: [dev@saifdev.xyz](mailto:dev@saifdev.xyz)
+- Use `/contact` command in the bot
+- Report issues on GitHub
 
----
 
-_Made with ❤️ for the community_
