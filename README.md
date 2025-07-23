@@ -1,7 +1,10 @@
 # SaifURL Bots
 
-A collection of bots for the [SaifURL](https://github.com/saifabdelrazek011/saifurl) URL shortening service, providing seamless URL management across different platforms.
-However, what is available now is the Telegram bot
+## Story behind the project
+
+From the beginning of the summer vacation and I wanted to learn to build bots, especially for Telegram, since I felt that would be funny and even useful for me and my built services in the future. However, there wasn't any idea or encouragement to learn to do so soon, since I am working on other projects and wanted to complete the first. Until I found the Converge YSWS program, which is at [Converge](http://converge.hackclub.com). This program is a program where you submit a bot for any platform and get prizes like any YSWS program. That was like the spark that made me start this project, and I am happy now.
+
+There are plans to create more bots for my short URL service, but I think I should complete my other projects first. 
 
 ## Currently Available Bots
 
